@@ -19,13 +19,12 @@ export default function Home() {
           <Hero />
           <button
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-lg transition duration-300"
-            onClick={handleClick}  // Moved logic into a separate function for clarity
+            onClick={handleClick}
           >
             Get Started
           </button>
         </main>
         <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-          {/* Footer content goes here */}
         </footer>
       </div>
     </>
