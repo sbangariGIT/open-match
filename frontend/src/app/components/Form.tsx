@@ -155,7 +155,7 @@ const Form: React.FC<FormProps> = ({ onSubmit }) => {
           type="file"
           onChange={handleFileChange}
           className="text-white"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf"
         />
         {resumeFileName && <p className="mt-2">Selected: {resumeFileName}</p>}
       </label>
