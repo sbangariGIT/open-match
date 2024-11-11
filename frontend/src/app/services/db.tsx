@@ -44,16 +44,43 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
             }
         ];
     } else {
-        // Fetch issue cards from the API if environment is not local
-        // Replace the API URL with your actual endpoint
+      const payload = await convertToJSON(formData);
       const response = await fetch('/api/issues', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData), // Send form data as JSON
+        body: JSON.stringify(payload), // Send form data as JSON
       });
       const data: IssueCard[] = await response.json();
       return data;
     }
+}
+
+async function convertToJSON(payload: ProfileFormValues) {
+    const { firstName, lastName, email, urls, resume, interests } = payload;
+    let resumeBase64: string | null = null;
+    if (resume) {
+      resumeBase64 = await fileToBase64(resume);
+    }
+
+    const jsonPayload = {
+      firstName,
+      lastName,
+      email,
+      urls,
+      resume: resumeBase64,
+      interests,
+    };
+  
+    return JSON.stringify(jsonPayload);
+  }
+  
+function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
 }
