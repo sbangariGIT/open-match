@@ -2,4 +2,5 @@ openai
 functions-framework
 requests
 pymongo==4.7.2
-
+pydantic
+pymupdf
