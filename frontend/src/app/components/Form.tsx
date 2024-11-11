@@ -78,7 +78,7 @@ const Form: React.FC<FormProps> = ({ onSubmit }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="border border-white text-white p-8 rounded-lg shadow-lg max-w-xl mx-auto min-h-[800px]"
+      className="border border-white text-white p-8 rounded-lg shadow-lg max-w-xl mx-auto"
     >
 
 <div className="flex gap-4 mb-4">

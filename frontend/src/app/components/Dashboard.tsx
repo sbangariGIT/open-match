@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Form, { ProfileFormValues } from './Form';
 import { IssueCard } from '../models/IssueCard';
 import IssueMatcher from './IssueMatcher';
@@ -10,14 +10,14 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [issues, setIssues] = useState<IssueCard[]>([]);
-
-  const handleTryAgain = () => {
-    setIssues([]);
-  } 
+  const resultRef = useRef<HTMLElement | null>(null);
 
   const handleFormSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     setIsError(false); // Reset error state before new request
+    if (resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
     try {
       const result = await getIssueCards(data);
       setIssues(result);
@@ -31,25 +31,15 @@ const Dashboard: React.FC = () => {
 
   return (
     <div id="dashboard" className="grid gap-8 font-[family-name:var(--font-geist-sans)]">
-    <h1 className="text-5xl font-bold text-center mt-10">Dashboard</h1>
-    { issues.length == 0 &&
+    <h1 className="text-5xl font-bold text-center mt-10">Fill your profile</h1>
     <div className="row-start-2">
     <Form onSubmit={handleFormSubmit} />
     </div>
-    }
-    <div className="row-start-2">
-    <IssueMatcher issueCards={issues} isLoading={isLoading} isError={isError}/>
-    </div>
-    { issues.length > 0 &&
     <div className="flex items-center justify-center mt-4">
-    <button 
-      className="bg-[#6C63FF] text-white font-semibold py-2 px-4 rounded hover:bg-[#5a52d4] transition duration-300"
-      onClick={handleTryAgain}
-    >
-      Try Again
-    </button>
-  </div>
-    }
+    <section id='results' ref={resultRef}>
+    <IssueMatcher issueCards={issues} isLoading={isLoading} isError={isError}/>
+    </section>
+    </div>
     </div>
   );
 };
