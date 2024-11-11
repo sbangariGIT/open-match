@@ -1,5 +1,6 @@
 import React from "react";
 import { IssueCard } from "../models/IssueCard";
+import IssueCardContainer from "./IssueCard";
 
 type IssueMatcherProps = {
   issueCards: IssueCard[];
@@ -26,7 +27,7 @@ const IssueMatcher: React.FC<IssueMatcherProps> = ({ issueCards, isLoading, isEr
   <div className="flex justify-center items-center">
   <div className="border-2 border-white rounded-lg text-center bg-black min-h-[800px] w-[900px] flex flex-col justify-center items-center p-6">
     <img src="loading.svg" alt="Searching for opportunities..." className="mx-auto h-40 w-auto mb-8 animate-pulse" />
-    <h2 className="text-white text-3xl font-bold mb-4">Hold Tight, We're Matching You with the Perfect Opportunity!</h2>
+    <h2 className="text-white text-3xl font-bold mb-4">Hold Tight, We’re Matching You with the Perfect Opportunity!</h2>
     <p className="text-white text-lg mb-6">Exploring open-source issues that align with your skills and passions...</p>
     <p className="text-white text-xl font-semibold animate-pulse">This will only take a moment!</p>
   </div>
@@ -37,9 +38,13 @@ const IssueMatcher: React.FC<IssueMatcherProps> = ({ issueCards, isLoading, isEr
 
   if (issueCards.length > 0) {
     return (
-      <div>
-        We have Issues to show
+      <div className="flex justify-center items-center">
+      <div className="border-2 border-white rounded-lg text-center bg-black min-h-[800px] min-w-[900px]">
+      {issueCards.map((issueCard, index) => (
+        <IssueCardContainer key={index} index={index} issueCard={issueCard} />
+      ))}
       </div>
+    </div>
     );
   }
 

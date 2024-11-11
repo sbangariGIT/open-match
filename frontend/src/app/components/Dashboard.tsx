@@ -11,6 +11,10 @@ const Dashboard: React.FC = () => {
   const [isError, setIsError] = useState<boolean>(false);
   const [issues, setIssues] = useState<IssueCard[]>([]);
 
+  const handleTryAgain = () => {
+    setIssues([]);
+  } 
+
   const handleFormSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true);
     setIsError(false); // Reset error state before new request
@@ -27,12 +31,25 @@ const Dashboard: React.FC = () => {
 
   return (
     <div id="dashboard" className="grid gap-8 font-[family-name:var(--font-geist-sans)]">
+    <h1 className="text-5xl font-bold text-center mt-10">Dashboard</h1>
+    { issues.length == 0 &&
     <div className="row-start-2">
     <Form onSubmit={handleFormSubmit} />
     </div>
+    }
     <div className="row-start-2">
     <IssueMatcher issueCards={issues} isLoading={isLoading} isError={isError}/>
     </div>
+    { issues.length > 0 &&
+    <div className="flex items-center justify-center mt-4">
+    <button 
+      className="bg-[#6C63FF] text-white font-semibold py-2 px-4 rounded hover:bg-[#5a52d4] transition duration-300"
+      onClick={handleTryAgain}
+    >
+      Try Again
+    </button>
+  </div>
+    }
     </div>
   );
 };

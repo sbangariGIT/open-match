@@ -13,7 +13,7 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
                 issueLink: "https://github.com/user-auth/issues/1",
                 description: "Bug in the user authentication flow",
                 tags: ["bug", "authentication"],
-                match: 85
+                match: 90
             },
             {
                 title: "Improve landing page UI",
@@ -22,7 +22,7 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
                 issueLink: "https://github.com/frontend/issues/2",
                 description: "Enhance the UI/UX for the landing page",
                 tags: ["enhancement", "UI/UX"],
-                match: 90
+                match: 85
             },
             {
                 title: "Add unit tests for auth services",
@@ -31,7 +31,7 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
                 issueLink: "https://github.com/auth-service/issues/3",
                 description: "Add unit tests to improve code coverage",
                 tags: ["testing", "auth"],
-                match: 75
+                match: 80
             },
             {
                 title: "Optimize database queries",
@@ -40,7 +40,7 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
                 issueLink: "https://github.com/backend/issues/4",
                 description: "Improve database query performance",
                 tags: ["optimization", "backend"],
-                match: 80
+                match: 70
             }
         ];
     } else {
