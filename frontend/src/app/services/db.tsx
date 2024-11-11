@@ -50,7 +50,7 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload), // Send form data as JSON
+        body: payload, // Send form data as JSON
       });
       const data: IssueCard[] = await response.json();
       return data;
