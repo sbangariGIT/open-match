@@ -4,3 +4,5 @@ requests
 pymongo==4.7.2
 pydantic
 pymupdf
+python-dotenv
+pydantic[email]

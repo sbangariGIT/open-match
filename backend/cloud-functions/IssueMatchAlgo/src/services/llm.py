@@ -1,31 +1,22 @@
 from openai import OpenAI
-from ..models.userprofile import UserProfile
 import base64
 import fitz
+from dotenv import load_dotenv
 
 SYSTEM_PROMPT = """
 You are an AI assistant tasked with providing a comprehensive summary of a user. You are given a users interests, resume and/or their github, LinkedIn, Project Links.
 If possible read the urls and get more information about this user.
-Based on this information provide a summary of user's interests that can be used to do a semantic search in a DB with the follwoing schema:
-{
-	repo_name     		: (str),
-	repo_full_name		: (str),
-	repo_html_url 		: (str),
-	repo_api_url		: (str),
-	repo_languages		: List(str),
-	repo_topics			: List(str),
-	issue_html_url		: (str),
-	issue_title			: (str),
-	issue_labels		: List(str), [l["name"] for l in labels],
-	pull_request_open	: bool,
-	issue_description			: str // 500 chars (Make this issue description based on issue and repo_description )
-}
+Based on this information provide a summary of user's interests for the type of projects that the user might be interested in working, which can be used to search github open issues that they can work on.
+Only provide the keywords in your summary that can be used for a semantic search. Keep your response less than 300 words.
+
+Only reply with the summary that is going to be used to create an embedding and nothing else.
 """
 MODEL = "gpt-4o-mini"
 
 
 class LLMService:
     def __init__(self):
+        load_dotenv()
         self.client = OpenAI()
 
     def pdf_to_text(self, base64_pdf: str) -> str:
@@ -46,7 +37,7 @@ class LLMService:
         pdf_document.close()
         return text
 
-    def get_user_summary(self, user: UserProfile):
+    def get_user_summary(self, user):
         content = [
             {
                 "type": "text",
@@ -73,6 +64,7 @@ Frameworks & Tools: LangChain, Flask, React, Kafka, Redis, MongoDB, Firebase, Do
 Topics of Interest: AI-powered applications, microservices, cloud infrastructure, CI/CD pipelines, backend architecture, LLM integrations, tech."""  # fallback string
 
     def create_an_embedding(self, summary: str) -> list[float]:
+        print(summary)
         return self.client.embeddings.create(input = [summary], model="text-embedding-3-small").data[0].embedding
 
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, HttpUrl, Field
-from typing import List
+from typing import List, Optional
 from ..services.llm import LLMSERVICE
 
 
@@ -7,16 +7,16 @@ class UserProfile(BaseModel):
     firstName: str = Field(..., min_length=1, max_length=50)
     lastName: str = Field(..., min_length=1, max_length=50)
     email: EmailStr
-    urls: List[HttpUrl]
-    resume: str = Field(
-        ...,
-        regex=r"^data:application/pdf;base64,[A-Za-z0-9+/=]+$",
+    urls: Optional[List[HttpUrl]] = []
+    resume: Optional[str] = Field(
+        default="",
+        pattern=r"^data:application/pdf;base64,[A-Za-z0-9+/=]*$",
         description="Base64 encoded PDF string",
     )
     interests: List[str]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "firstName": "John",
                 "lastName": "Doe",
