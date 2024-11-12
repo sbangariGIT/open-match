@@ -1,7 +1,7 @@
 import time
 import functions_framework
 from .models.userprofile import UserProfile
-# from .services.db import DB
+from .services.db import DB
 
 
 def process_request(data):
@@ -9,8 +9,7 @@ def process_request(data):
         userProfile = UserProfile(**data)
         embedding = userProfile.get_query_embedding()
         result = {"result": embedding}
-        #TODO: Once gummi completes putting documents we can do the search an return the issues. For now let's just return the embedding
-        # result = DB.get_k_: nearest_issues(embedding, k=4)
+        result = DB.get_k_nearest_issues(embedding, k=4)
         return result, 200
     except ValueError as e:
         return {"error": str(e)}, 200

@@ -22,8 +22,9 @@ class DBService:
         docs = []
         for doc in results:
             del doc['embedding']
+            del doc['_id']
             doc['match'] = random.randint(60, 90) # Need to dynamically determine the match, for now let me mock it
-            docs.append(doc['name'])
-        return {"results": docs}, 200
+            docs.append(doc)
+        return {"results": docs}
 
 DB = DBService()
