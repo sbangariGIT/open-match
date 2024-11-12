@@ -45,14 +45,15 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
         ];
     } else {
       const payload = await convertToJSON(formData);
-      const response = await fetch('/api/issues', {
+      const response = await fetch(`${process.env.ISSUES_API_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: payload, // Send form data as JSON
       });
-      const data: IssueCard[] = await response.json();
+      const jsonResponse = await response.json();
+      const data: IssueCard[] = jsonResponse.results; // Access 'results' field
       return data;
     }
 }
