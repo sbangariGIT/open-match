@@ -61,7 +61,7 @@ def parse_json_file(file_path):
                 embedding = make_an_embedding(issue, summary)
                 # add embedding
                 issue["embedding"] = embedding
-                issue["summary"] = summary
+                # issue["summary"] = summary
                 # write to mongo db atlas
                 write_to_db(issue)
 
