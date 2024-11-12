@@ -8,7 +8,7 @@ def process_request(data):
     try:
         userProfile = UserProfile(**data)
         embedding = userProfile.get_query_embedding()
-        result = {"embedding": embedding}
+        result = {"result": embedding}
         #TODO: Once gummi completes putting documents we can do the search an return the issues. For now let's just return the embedding
         # result = DB.get_k_: nearest_issues(embedding, k=4)
         return result, 200

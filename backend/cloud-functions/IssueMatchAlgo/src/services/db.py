@@ -6,9 +6,8 @@ import random
 class DBService:
     def __init__(self):
         self.client = MongoClient(os.environ.get("MONGODB_URI"))
-        self.db =  self.client.open-match # type: ignore
+        self.db =  self.client.open_match
         self.collection = self.db.issues
-        self.index = "issuesSemanticSearch"
 
     def get_k_nearest_issues(self, embedding : list[float], k=4):
         results = self.collection.aggregate([
@@ -17,7 +16,7 @@ class DBService:
             "path": "embedding",
             "numCandidates": 100,
             "limit": k,
-            "index": "self.index",
+            "index": "issuesSemanticSearch",
             }}
         ])
         docs = []
