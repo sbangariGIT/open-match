@@ -1,4 +1,5 @@
 # OPEN MATCH
+![Alt text](./assets/arch.png)
 
 ## Inspiration
 
