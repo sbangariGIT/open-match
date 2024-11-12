@@ -45,7 +45,6 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
         ];
     } else {
       const payload = await convertToJSON(formData);
-      console.log(process.env.NEXT_PUBLIC_ISSUES_API_URL);
       const response = await fetch(`${process.env.NEXT_PUBLIC_ISSUES_API_URL}`, {
         method: 'POST',
         headers: {
