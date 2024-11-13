@@ -21,7 +21,12 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
 
     // Check if 'results' exist in the response
     if (!jsonResponse.results || !Array.isArray(jsonResponse.results)) {
-      throw new Error("Invalid response: 'results' field is missing or not an array");
+      if (jsonResponse.error) {
+        throw new Error(jsonResponse.error);
+      }else{
+        throw new Error("There was an error in processing your request");
+      }
+      
     }
 
       const data: IssueCard[] = jsonResponse.results; // Access 'results' field

@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
       setIssues(result);
     } catch (error) {
       setIsError(true); // Handle error if API call fails
-      console.error('Error:', error);
+      alert(error);
     } finally {
       setIsLoading(false); // Stop loading state once the request is done
     }
