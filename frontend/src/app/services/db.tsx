@@ -2,49 +2,8 @@ import { IssueCard } from "../models/IssueCard";
 import { ProfileFormValues } from "../components/Form";
 
 export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueCard[]> => {
-    const isLocal = process.env.LOCAL_ENV === 'true' || process.env.NODE_ENV === 'development';
-    if (isLocal) {
-        // Return dummy data if environment is local
-        return [
-            {
-                title: "Fix bug in user authentication",
-                repoName: "user-auth",
-                issueNumber: "1",
-                issueLink: "https://github.com/user-auth/issues/1",
-                description: "Bug in the user authentication flow",
-                tags: ["bug", "authentication"],
-                match: 90
-            },
-            {
-                title: "Improve landing page UI",
-                repoName: "frontend",
-                issueNumber: "2",
-                issueLink: "https://github.com/frontend/issues/2",
-                description: "Enhance the UI/UX for the landing page",
-                tags: ["enhancement", "UI/UX"],
-                match: 85
-            },
-            {
-                title: "Add unit tests for auth services",
-                repoName: "auth-service",
-                issueNumber: "3",
-                issueLink: "https://github.com/auth-service/issues/3",
-                description: "Add unit tests to improve code coverage",
-                tags: ["testing", "auth"],
-                match: 80
-            },
-            {
-                title: "Optimize database queries",
-                repoName: "backend",
-                issueNumber: "4",
-                issueLink: "https://github.com/backend/issues/4",
-                description: "Improve database query performance",
-                tags: ["optimization", "backend"],
-                match: 70
-            }
-        ];
-    } else {
       const payload = await convertToJSON(formData);
+      // change to http://localhost:8080/ to test locally
       const response = await fetch(`${process.env.NEXT_PUBLIC_ISSUES_API_URL}`, {
         method: 'POST',
         headers: {
@@ -52,30 +11,49 @@ export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueC
         },
         body: payload, // Send form data as JSON
       });
-      const jsonResponse = await response.json();
+
+      // Check if the response is okay
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const jsonResponse = await response.json();
+
+    // Check if 'results' exist in the response
+    if (!jsonResponse.results || !Array.isArray(jsonResponse.results)) {
+      throw new Error("Invalid response: 'results' field is missing or not an array");
+    }
+
       const data: IssueCard[] = jsonResponse.results; // Access 'results' field
       return data;
-    }
 }
 
 async function convertToJSON(payload: ProfileFormValues) {
-    const { firstName, lastName, email, urls, resume, interests } = payload;
-    let resumeBase64: string | null = null;
-    if (resume) {
-      resumeBase64 = await fileToBase64(resume);
-    }
+  const { firstName, lastName, email, urls, resume, interests } = payload;
 
-    const jsonPayload = {
-      firstName,
-      lastName,
-      email,
-      urls,
-      resume: resumeBase64,
-      interests,
-    };
-  
-    return JSON.stringify(jsonPayload);
+  // Initialize an empty object for the JSON payload
+  const jsonPayload: Record<string, string | string[] > = {
+    firstName,
+    lastName,
+    email,
+    interests,
+  };
+
+  // Convert resume to Base64 if it exists
+  if (resume) {
+    const resumeBase64 = await fileToBase64(resume);
+    // Include resume only if Base64 conversion is successful
+    if (resumeBase64) {
+      jsonPayload.resume = resumeBase64;
+    }
   }
+
+  // Include 'urls' only if it's not empty or just ['']
+  if (urls && urls.length > 0 && !(urls.length === 1 && urls[0] === '')) {
+    jsonPayload.urls = urls;
+  }
+  return JSON.stringify(jsonPayload);
+}
   
 function fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
