@@ -1,3 +1,0 @@
-"""
-Slack Log Implementation (optional)
-"""

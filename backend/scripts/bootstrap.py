@@ -19,7 +19,6 @@ MODEL = "gpt-4o-mini"
 
 
 def write_to_db(issue):
-    print("adding", issue["issue_title"])
     collection.insert_one(issue)
 
 
