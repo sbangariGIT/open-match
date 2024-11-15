@@ -10,11 +10,14 @@ class Logger:
         self.slack_client = WebClient(os.getenv('SLACK_BOT_TOKEN'))
 
     def notify_slack(self, message):
-        self.debug_print(f"Sending Slack Message: {message}")
-        message = message
-        self.slack_client.chat_postMessage(
-        channel='monitor-cloud',
-        text=message)
+        try:
+            self.debug_print(f"Sending Slack Message: {message}")
+            message = message
+            self.slack_client.chat_postMessage(
+            channel='monitor-cloud',
+            text=message)
+        except Exception as e:
+            self.debug_print("Failed to send slack message")
 
     def debug_print(self, message):
         print(message)
