@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Issue } from "../models/issues";
+import { Issue } from "../models/Issues";
 
 type Props = {
     issues: Issue[]; // List of issues passed as a prop

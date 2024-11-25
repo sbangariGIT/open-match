@@ -6,7 +6,7 @@ import { IssueCard } from '../models/IssueCard';
 import IssueMatcher from './IssueMatcher';
 import { getIssueCards } from '../services/db';
 import IssueBoard from './IssueSearch';
-import { Issue } from "../models/issues";
+import { Issue } from '../models/Issues';
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
