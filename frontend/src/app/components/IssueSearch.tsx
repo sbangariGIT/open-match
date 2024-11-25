@@ -68,121 +68,160 @@ const IssueBoard: React.FC<Props> = ({ issues }) => {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white p-6">
-            <div className="flex flex-wrap justify-center items-center gap-6 mb-10">
-                <div className="flex flex-wrap justify-center items-center gap-6 mb-10">
-                    {/* Labels Filter */}
-                    <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-3">Labels</h3>
-                        {[...new Set(issues.flatMap((issue) => issue.labels))].map((label) => (
-                            <label
-                                key={label}
-                                className="block text-sm flex items-center gap-2 mb-2 cursor-pointer hover:text-gray-300"
-                            >
-                                <input
-                                    type="checkbox"
-                                    className="accent-blue-500"
-                                    value={label}
-                                    checked={filterLabels.includes(label)}
-                                    onChange={handleLabelChange}
-                                />
-                                {label}
-                            </label>
-                        ))}
+        <div className="min-h-screen bg-black text-white p-6 flex">
+            {/* Filters Section */}
+            <div className="w-full lg:w-1/4 p-4 bg-gray-900 rounded-lg shadow-lg">
+                {/* Labels Filter */}
+                <div className="space-y-6">
+                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-white">Labels</h3>
+                        <div className="space-y-2">
+                            {[...new Set(issues.flatMap((issue) => issue.labels))].map((label) => (
+                                <label
+                                    key={label}
+                                    className="flex items-center gap-3 text-sm text-gray-400 cursor-pointer hover:text-white transition"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 accent-blue-500 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                        value={label}
+                                        checked={filterLabels.includes(label)}
+                                        onChange={handleLabelChange}
+                                    />
+                                    <span className="capitalize">{label}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Languages Filter */}
-                    <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-3">Languages</h3>
-                        {[...new Set(issues.flatMap((issue) => issue.languages))].map((lang) => (
-                            <label
-                                key={lang}
-                                className="block text-sm flex items-center gap-2 mb-2 cursor-pointer hover:text-gray-300"
-                            >
-                                <input
-                                    type="checkbox"
-                                    className="accent-green-500"
-                                    value={lang}
-                                    checked={filterLanguages.includes(lang)}
-                                    onChange={handleLanguageChange}
-                                />
-                                {lang}
-                            </label>
-                        ))}
+                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-white">Languages</h3>
+                        <div className="space-y-2">
+                            {[...new Set(issues.flatMap((issue) => issue.languages))].map((lang) => (
+                                <label
+                                    key={lang}
+                                    className="flex items-center gap-3 text-sm text-gray-400 cursor-pointer hover:text-white transition"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 accent-green-500 rounded focus:ring-2 focus:ring-green-400 focus:outline-none"
+                                        value={lang}
+                                        checked={filterLanguages.includes(lang)}
+                                        onChange={handleLanguageChange}
+                                    />
+                                    <span className="capitalize">{lang}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Issues Display */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredIssues.length > 0 ? (
-                    filteredIssues.map((issue) => (
-                        <div key={issue.issue_number} className="bg-gray-800 p-6 rounded-lg shadow-md transform hover:scale-105 transition-all duration-300">
-                            <h3 className="text-xl font-bold mb-3">
-                                <a
-                                    href={issue.issue_html_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 hover:underline"
-                                >
-                                    {issue.issue_title}
-                                </a>
-                            </h3>
-                            <p className="text-gray-400 mb-3">{issue.repo_description}</p>
-                            <p>
-                                <strong>Repo:</strong>{" "}
-                                <a
-                                    href={issue.repo_html_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-400 hover:underline"
-                                >
-                                    {issue.repo_full_name}
-                                </a>
-                            </p>
-                            <p className="mt-2">
-                                <strong>Stars:</strong> {issue.repo_stars} |{" "}
-                                <strong>Watchers:</strong> {issue.repo_watchers}
-                            </p>
-                            <p className="mt-2">
-                                <strong>Languages:</strong>{" "}
-                                <span className="text-gray-300">{issue.languages.join(", ")}</span>
-                            </p>
-                            <p className="mt-2">
-                                <strong>Labels:</strong>{" "}
-                                <span className="text-gray-300">{issue.labels.join(", ")}</span>
-                            </p>
-                        </div>
-                    ))
-                ) : (
-                    <p className="col-span-full text-center text-gray-500">
-                        No results match your filters.
-                    </p>
-                )}
-            </div>
+            {/* Issues Section */}
+            <div className="flex-grow p-4">
+                {/* Issues Display */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredIssues.length > 0 ? (
+                        filteredIssues.map((issue, index) => (
+                            <div
+                                key={issue.issue_number}
+                                className="p-4 mb-4 border rounded-lg shadow-md"
+                                style={{ backgroundColor: index % 2 === 0 ? '#6C63FF' : '#000000' }}
+                            >
+                                <h2 className="text-xl font-semibold mb-2 text-white">
+                                    <a
+                                        href={issue.issue_html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline"
+                                    >
+                                        {issue.issue_title}
+                                    </a>
+                                </h2>
 
-            {/* Pagination Controls */}
-            <div className="flex justify-center gap-4 mt-6">
-                <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition-all"
-                >
-                    Previous
-                </button>
-                <span className="text-lg font-semibold">
-                    Page {currentPage} of {totalPages}
-                </span>
-                <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition-all"
-                >
-                    Next
-                </button>
+                                <div className="text-sm mb-2 text-gray-300">
+                                    <span>Repository: </span>
+                                    <a
+                                        href={issue.repo_html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline text-blue-400"
+                                    >
+                                        {issue.repo_full_name}
+                                    </a>
+                                </div>
+
+                                <p className="mb-4 text-gray-400">{issue.repo_description}</p>
+
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {issue.labels.map((label, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="px-3 py-1 text-sm border-2 border-white rounded-full text-center"
+                                        >
+                                            {label}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {issue.languages.map((lang, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="px-3 py-1 text-sm border-2 border-gray-400 rounded-full text-center"
+                                        >
+                                            {lang}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <div className="flex justify-between items-center text-white">
+                                    <span className="text-lg font-bold">
+                                        Stars: {issue.repo_stars} | Watchers: {issue.repo_watchers}
+                                    </span>
+                                    <a
+                                        href={issue.issue_html_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-blue-400 hover:underline"
+                                    >
+                                        View Issue
+                                    </a>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="col-span-full text-center text-gray-500">
+                            No results match your filters.
+                        </p>
+                    )}
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-center gap-4 mt-6">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition-all"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-lg font-semibold">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition-all"
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
         </div>
     );
+
 };
 
 export default IssueBoard;
