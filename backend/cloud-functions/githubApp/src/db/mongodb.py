@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 import requests
 
 
@@ -9,8 +10,8 @@ class MongoDBHandler:
         # Load environment variables from .env file
         load_dotenv()
         MONGO_DB_URI = os.getenv("MONGO_DB_URI")
-        self.client = MongoClient(MONGO_DB_URI)
-        self.db = self.client.open_match
+        client = MongoClient(MONGO_DB_URI, server_api=ServerApi('1'))
+        self.db = client.open_match
         self.collection = self.db.issues_bot_gen
         self.collection_2 = self.db.repo
 
@@ -66,35 +67,7 @@ class MongoDBHandler:
         except Exception as e:
             print("there was an error in fetch_repo_details")
             return {}
-    
-    def fetch_issue_details(self, repo, issue, github_token):
-        """
-        Fetches information about for a given GitHub repository.
 
-        Args:
-        repo (str): The repository in "owner/repo" format (e.g., "microsoft/vscode").
-        github_token (str): GitHub token for authentication.
-
-        Returns:
-        dict: Repo object with details like owner, urls, license, topics.
-        """
-        headers = {
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-        response = requests.get(f"https://api.github.com/repos/{repo}/issues/{issue}", headers=headers)
-        if response.status_code == 200:
-            issues_data = response.json()
-            if not issues_data:  # Break if no more issues are returned
-                return {}
-            issue = {
-                    "issue_number": issue.get("number"),
-                    "issue_title": issue.get("title"),
-                    "labels": [label.get("name") for label in issue.get("labels")],
-                    "issue_html_url": issue.get("html_url"),
-                }
-            return issue
-        return {}
     
     def build_issue_object(self, repo, issue):
 
@@ -129,7 +102,6 @@ class MongoDBHandler:
         """
         try:
             repo_details = self.fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
-            # issue_details = self.fetch_issue_details(repo, issue, os.getenv("GITHUB_TOKEN"))
             issue_obj = self.build_issue_object(repo_details, issue)
             print(issue_obj)
             self.collection.insert_one(issue_obj)
