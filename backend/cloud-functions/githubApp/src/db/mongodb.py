@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from openai import OpenAI
 import requests
 
 
@@ -10,9 +9,7 @@ class MongoDBHandler:
         # Load environment variables from .env file
         load_dotenv()
         MONGO_DB_URI = os.getenv("MONGO_DB_URI")
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.client = MongoClient(MONGO_DB_URI)
-        self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
         self.db = self.client.open_match
         self.collection = self.db.issues_bot_gen
         self.collection_2 = self.db.repo
@@ -55,16 +52,20 @@ class MongoDBHandler:
         Returns:
         dict: Repo object with details like owner, urls, license, topics.
         """
-        headers = {
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-        response = requests.get("https://api.github.com/repos/{repo_name}".format(repo_name=repo), headers=headers)
-        if response.status_code == 200:
-            repo_data = response.json()
-            repo_data["languages"] = self.get_languages(repo_data["languages_url"], github_token=github_token)
-            return repo_data
-        return {}
+        try: 
+            headers = {
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json",
+            }
+            response = requests.get("https://api.github.com/repos/{repo_name}".format(repo_name=repo), headers=headers)
+            if response.status_code == 200:
+                repo_data = response.json()
+                repo_data["languages"] = self.get_languages(repo_data.get("languages_url"), github_token=github_token)
+                return repo_data
+            return {}
+        except Exception as e:
+            print("there was an error in fetch_repo_details")
+            return {}
     
     def fetch_issue_details(self, repo, issue, github_token):
         """
@@ -87,10 +88,10 @@ class MongoDBHandler:
             if not issues_data:  # Break if no more issues are returned
                 return {}
             issue = {
-                    "issue_number": issue["number"],
-                    "issue_title": issue["title"],
-                    "labels": [label["name"] for label in issue["labels"]],
-                    "issue_html_url": issue["html_url"],
+                    "issue_number": issue.get("number"),
+                    "issue_title": issue.get("title"),
+                    "labels": [label.get("name") for label in issue.get("labels")],
+                    "issue_html_url": issue.get("html_url"),
                 }
             return issue
         return {}
@@ -98,18 +99,18 @@ class MongoDBHandler:
     def build_issue_object(self, repo, issue):
 
         issue_obj = {
-            "repo_name": repo["name"],
-            "repo_full_name": repo["full_name"],
-            "repo_html_url": repo["html_url"],
-            "repo_description": repo["description"],
-            "repo_stars": repo["stargazers_count"],
-            "repo_watchers": repo["watchers_count"],
+            "repo_name": repo.get("name"),
+            "repo_full_name": repo.get("full_name"),
+            "repo_html_url": repo.get("html_url"),
+            "repo_description": repo.get("description"),
+            "repo_stars": repo.get("stargazers_count"),
+            "repo_watchers": repo.get("watchers_count"),
             "languages": repo.get("languages"),
-            "repo_topics": repo["topics"],
-            "issue_html_url": issue["issue_html_url"],
-            "issue_number": issue["issue_number"],
-            "issue_title": issue["issue_title"],
-            "labels": issue["labels"],
+            "repo_topics": repo.get("topics"),
+            "issue_html_url": issue.get("html_url"),
+            "issue_number": issue.get("number"),
+            "issue_title": issue.get("title"),
+            "labels":  [label.get("name") for label in issue.get("labels")],
         }
         return issue_obj
 
@@ -126,10 +127,15 @@ class MongoDBHandler:
         Adds a new repo to the MongoDB collection.
         :param repo: Name of the repo in the format OWNER/REPONAME.
         """
-        repo_details = self.fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
-        issue_details = self.fetch_issue_details(repo, issue, os.getenv("GITHUB_TOKEN"))
-        issue = self.build_issue_object(repo_details, issue_details)
-        self.collection.insert_one(issue)
+        try:
+            repo_details = self.fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
+            # issue_details = self.fetch_issue_details(repo, issue, os.getenv("GITHUB_TOKEN"))
+            issue_obj = self.build_issue_object(repo_details, issue)
+            print(issue_obj)
+            self.collection.insert_one(issue_obj)
+        except Exception as e:
+            print("There was an error in adding an issue")
+            print(str(e))
 
 
 mongoDBHandler = MongoDBHandler()

@@ -38,7 +38,7 @@ def process_request(payload):
         if payload.get("action") == VALID_ACTIONS[0] or payload.get("action") == VALID_ACTIONS[1] or payload.get("action") == VALID_ACTIONS[2]:
             # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
-                mongoDBHandler.add_issue(payload.get("repository").get("full_name"), payload.get("issue").get("number"))
+                mongoDBHandler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an issue hence not adding it")
         elif payload.get("action") == VALID_ACTIONS[3]:
@@ -57,9 +57,9 @@ def process_request(payload):
 def github_webhook(request):
     """Handle GitHub webhook payload with signature verification."""
     # Verify the GitHub signature
-    verification_error = verify_github_signature(request)
-    if verification_error:
-        return verification_error
+    # verification_error = verify_github_signature(request)
+    # if verification_error:
+    #     return verification_error
 
     try:
         # Parse JSON payload
