@@ -9,12 +9,13 @@ load_dotenv()
 
 # Replace with your GitHub webhook secret
 WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET")
-
+VALID_ACTIONS = ["opened", "reopened", "unlocked",  "added", "closed", "locked"]
 
 def verify_github_signature(request):
     """Verify that the request is coming from GitHub by checking the signature."""
     signature_header = request.headers.get('X-Hub-Signature-256')
     if not signature_header:
+        central_logger.severe("Missing X-Hub-Signature-256 header")
         return {"error": "Missing X-Hub-Signature-256 header"}, 403
 
     # Get the raw payload body
@@ -26,10 +27,26 @@ def verify_github_signature(request):
 
     # Compare signatures
     if not hmac.compare_digest(expected_signature, signature_header):
+        central_logger.severe("Signatures did not match")
         return {"error": "Signatures did not match"}, 403
 
     return None  # Indicates validation passed
 
+def process_request(payload):
+    try:
+        if payload.get("action") == VALID_ACTIONS[0] or payload.get("action") == VALID_ACTIONS[1] or payload.get("action") == VALID_ACTIONS[2]:
+            # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
+            pass
+        elif payload.get("action") == VALID_ACTIONS[3]:
+            # label is added, we need to update this in our DB
+            pass
+        elif payload.get("action") == VALID_ACTIONS[4]:
+            # the issue was closed, or locked, we need to remove it from our DB 
+            pass
+        return True
+    except Exception as e:
+        central_logger.severe(f"An Expection occured while processing the following payload ```{payload}```\n Exceptions {str(e)}")
+        return False
 
 @functions_framework.http
 def github_webhook(request):
@@ -44,8 +61,12 @@ def github_webhook(request):
         payload = request.get_json(silent=True)
         if not payload:
             return {"status": "failure", "message": "No payload found"}, 400
+        
+        if payload.get("action") not in VALID_ACTIONS:
+            print("Rejecting payload:", payload)
+            {"status": "success", "message": "Payload received, but not useful"}, 200
+            central_logger.info("Payload received, but not useful")
 
-        print("Received payload:", payload)
         central_logger.info(f"Received payload: ```{payload}```")
 
         # Return success response
