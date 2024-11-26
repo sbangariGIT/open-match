@@ -3,7 +3,7 @@ import hmac
 import os
 import functions_framework
 from dotenv import load_dotenv
-
+from .logging.logger import central_logger
 
 load_dotenv()
 
@@ -46,9 +46,17 @@ def github_webhook(request):
             return {"status": "failure", "message": "No payload found"}, 400
 
         print("Received payload:", payload)
+        central_logger.info(f"Received payload: ```{payload}```")
 
         # Return success response
         return {"status": "success", "message": "Payload received"}, 200
     except Exception as e:
         print(f"Error: {e}")
         return {"status": "failure", "message": str(e)}, 500
+
+"""
+Notes:
+1. Labels can be added to closed issues that we do not care about
+2. Currently we only care about issues, so ignore PRs creations
+3. We need to know which all repos have us downloaded and used
+"""
