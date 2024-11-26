@@ -4,6 +4,7 @@ import os
 import functions_framework
 from dotenv import load_dotenv
 from .logging.logger import central_logger
+from .db.mongodb import mongoDBHandler
 
 load_dotenv()
 
@@ -36,12 +37,16 @@ def process_request(payload):
     try:
         if payload.get("action") == VALID_ACTIONS[0] or payload.get("action") == VALID_ACTIONS[1] or payload.get("action") == VALID_ACTIONS[2]:
             # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
-            pass
+            if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
+                mongoDBHandler.add_issue(payload.get("repository").get("full_name"), payload.get("issue").get("number"))
+            else:
+                central_logger.info("Not an issue hence not adding it")
         elif payload.get("action") == VALID_ACTIONS[3]:
             # label is added, we need to update this in our DB
-            pass
+            central_logger.warning("Did not implement label addition")
         elif payload.get("action") == VALID_ACTIONS[4]:
-            # the issue was closed, or locked, we need to remove it from our DB 
+            # the issue was closed, or locked, we need to remove it from our DB
+            central_logger.warning("Did not implement issue close")
             pass
         return True
     except Exception as e:
@@ -67,7 +72,7 @@ def github_webhook(request):
             {"status": "success", "message": "Payload received, but not useful"}, 200
             central_logger.info("Payload received, but not useful")
 
-        central_logger.info(f"Received payload: ```{payload}```")
+        process_request(payload=payload)
 
         # Return success response
         return {"status": "success", "message": "Payload received"}, 200

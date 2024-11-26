@@ -14,85 +14,122 @@ class MongoDBHandler:
         self.client = MongoClient(MONGO_DB_URI)
         self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
         self.db = self.client.open_match
-        self.collection = self.db.issues_new
+        self.collection = self.db.issues_bot_gen
         self.collection_2 = self.db.repo
 
-    def get_document(self, collection_name: str, document_id: str):
+    def get_languages(self, lang_url, github_token):
         """
-        Fetches a document from the MongoDB collection.
-        :param collection_name: Name of the collection to fetch the document from.
-        :param document_id: ID of the document to fetch.
-        :return: The document data if found, otherwise None.
-        """
-        collection = self.db[collection_name]
-        document = collection.find_one({"uuid": document_id})
-        return document
+        Fetch languages used in the particular Repo
 
-    def update_document(self, collection_name: str, document_id: str, data: dict):
+        Args:
+        lang_url (str): Github repo languages API URL
+
+        Returns:
+        list: A list of all the languages used in the repo
         """
-        Updates a document in the MongoDB collection.
-        :param collection_name: Name of the collection to update the document in.
-        :param document_id: ID of the document to update.
-        :param data: Dictionary containing the data to update.
-        :return: The result of the update operation.
+
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+        response = requests.get(lang_url, headers=headers)
+        if response.status_code == 200:
+            languages_data = response.json()
+            languages = []
+            for lang in languages_data.keys():
+                languages.append(lang)
+            return languages
+        else:
+            print(f"Failed to fetch repo languages: {response.status_code}")
+            return []
+    
+    def fetch_repo_details(self, repo, github_token):
         """
-        collection = self.db[collection_name]
-        result = collection.update_one({"uuid": document_id}, {"$set": data})
-        return result
+        Fetches information about for a given GitHub repository.
+
+        Args:
+        repo (str): The repository in "owner/repo" format (e.g., "microsoft/vscode").
+        github_token (str): GitHub token for authentication.
+
+        Returns:
+        dict: Repo object with details like owner, urls, license, topics.
+        """
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        response = requests.get("https://api.github.com/repos/{repo_name}".format(repo_name=repo), headers=headers)
+        if response.status_code == 200:
+            repo_data = response.json()
+            repo_data["languages"] = self.get_languages(repo_data["languages_url"], github_token=github_token)
+            return repo_data
+        return {}
+    
+    def fetch_issue_details(self, repo, issue, github_token):
+        """
+        Fetches information about for a given GitHub repository.
+
+        Args:
+        repo (str): The repository in "owner/repo" format (e.g., "microsoft/vscode").
+        github_token (str): GitHub token for authentication.
+
+        Returns:
+        dict: Repo object with details like owner, urls, license, topics.
+        """
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        response = requests.get(f"https://api.github.com/repos/{repo}/issues/{issue}", headers=headers)
+        if response.status_code == 200:
+            issues_data = response.json()
+            if not issues_data:  # Break if no more issues are returned
+                return {}
+            issue = {
+                    "issue_number": issue["number"],
+                    "issue_title": issue["title"],
+                    "labels": [label["name"] for label in issue["labels"]],
+                    "issue_html_url": issue["html_url"],
+                }
+            return issue
+        return {}
+    
+    def build_issue_object(self, repo, issue):
+
+        issue_obj = {
+            "repo_name": repo["name"],
+            "repo_full_name": repo["full_name"],
+            "repo_html_url": repo["html_url"],
+            "repo_description": repo["description"],
+            "repo_stars": repo["stargazers_count"],
+            "repo_watchers": repo["watchers_count"],
+            "languages": repo.get("languages"),
+            "repo_topics": repo["topics"],
+            "issue_html_url": issue["issue_html_url"],
+            "issue_number": issue["issue_number"],
+            "issue_title": issue["issue_title"],
+            "labels": issue["labels"],
+        }
+        return issue_obj
 
     def add_repo(self, repo: str):
         """
         Adds a new repo to the MongoDB collection.
         :param repo: Name of the repo in the format OWNER/REPONAME.
         """
-        def get_languages(lang_url, github_token):
-            """
-            Fetch languages used in the particular Repo
-
-            Args:
-            lang_url (str): Github repo languages API URL
-
-            Returns:
-            list: A list of all the languages used in the repo
-            """
-
-            headers = {
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json"
-            }
-
-            response = requests.get(lang_url, headers=headers)
-            if response.status_code == 200:
-                languages_data = response.json()
-                languages = []
-                for lang in languages_data.keys():
-                    languages.append(lang)
-                return languages
-            else:
-                print(f"Failed to fetch repo languages: {response.status_code}")
-                return []
-        def fetch_repo_details(repo, github_token):
-            """
-            Fetches information about for a given GitHub repository.
-
-            Args:
-            repo (str): The repository in "owner/repo" format (e.g., "microsoft/vscode").
-            github_token (str): GitHub token for authentication.
-
-            Returns:
-            dict: Repo object with details like owner, urls, license, topics.
-            """
-            headers = {
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json",
-            }
-            response = requests.get("https://api.github.com/repos/{repo_name}".format(repo_name=repo), headers=headers)
-            if response.status_code == 200:
-                repo_data = response.json()
-                repo_data["languages"] = get_languages(repo_data["languages_url"], github_token=github_token)
-                return repo_data
-            return {}
-        repo_details = fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
+        repo_details = self.fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
         self.collection_2.insert_one(repo_details)
+
+    def add_issue(self, repo, issue):
+        """
+        Adds a new repo to the MongoDB collection.
+        :param repo: Name of the repo in the format OWNER/REPONAME.
+        """
+        repo_details = self.fetch_repo_details(repo, os.getenv("GITHUB_TOKEN"))
+        issue_details = self.fetch_issue_details(repo, issue, os.getenv("GITHUB_TOKEN"))
+        issue = self.build_issue_object(repo_details, issue_details)
+        self.collection.insert_one(issue)
+
 
 mongoDBHandler = MongoDBHandler()
