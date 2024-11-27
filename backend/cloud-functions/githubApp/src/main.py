@@ -4,7 +4,7 @@ import os
 import functions_framework
 from dotenv import load_dotenv
 from .logging.logger import central_logger
-from .db.mongodb import mongoDBHandler
+from .services.mongodb import mongo_handler
 
 load_dotenv()
 
@@ -38,7 +38,7 @@ def process_request(payload):
         if payload.get("action") == VALID_ACTIONS[0] or payload.get("action") == VALID_ACTIONS[1] or payload.get("action") == VALID_ACTIONS[2]:
             # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
-                mongoDBHandler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
+                mongo_handler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an issue hence not adding it")
         elif payload.get("action") == VALID_ACTIONS[3]:
@@ -46,8 +46,7 @@ def process_request(payload):
             central_logger.warning("Did not implement label addition")
         elif payload.get("action") == VALID_ACTIONS[4]:
             # the issue was closed, or locked, we need to remove it from our DB
-            central_logger.warning("Did not implement issue close")
-            pass
+            mongo_handler.remove_issue(payload.get("repository").get("full_name"), payload.get("issue"))
         return True
     except Exception as e:
         central_logger.severe(f"An Expection occured while processing the following payload ```{payload}```\n Exceptions {str(e)}")
