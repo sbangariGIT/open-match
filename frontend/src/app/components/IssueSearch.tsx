@@ -3,9 +3,37 @@ import { Issue } from "../models/Issues";
 
 type Props = {
     issues: Issue[]; // List of issues passed as a prop
+    isLoading: boolean;
+    isError: boolean;
 };
 
-const IssueBoard: React.FC<Props> = ({ issues }) => {
+const IssueBoard: React.FC<Props> = ({ issues,  isLoading, isError }) => {
+    if (isError) {
+        return (
+          <div className="flex justify-center items-center">
+          <div className="border-2 border-white rounded-lg text-center bg-black min-h-[800px] w-[900px] flex flex-col justify-center items-center p-6">
+            <img src="error.svg" alt="Oops! Something went wrong..." className="mx-auto h-40 w-auto mb-8" />
+            <h2 className="text-white text-3xl font-bold mb-4">Oops! Something Went Wrong</h2>
+            <p className="text-white text-lg mb-6">We hit a bump while looking for matching opportunities. But don’t worry, we’re on it!</p>
+            <p className="text-white text-xl font-semibold">Please try again in a moment...</p>
+          </div>
+        </div>
+        )
+      }
+    
+      if (isLoading) {
+        return (
+      <div className="flex justify-center items-center">
+      <div className="border-2 border-white rounded-lg text-center bg-black min-h-[800px] w-[900px] flex flex-col justify-center items-center p-6">
+        <img src="loading.svg" alt="Searching for opportunities..." className="mx-auto h-40 w-auto mb-8 animate-pulse" />
+        <h2 className="text-white text-3xl font-bold mb-4">Hold Tight, While we get you some great projects to work on!</h2>
+        <p className="text-white text-lg mb-6">Exploring open-source issues that align with your skills and passions...</p>
+        <p className="text-white text-xl font-semibold animate-pulse">This will only take a moment!</p>
+      </div>
+      </div>
+    
+        )
+      }
     // State for filters and pagination
     const [filterLabels, setFilterLabels] = useState<string[]>([]);
     const [filterLanguages, setFilterLanguages] = useState<string[]>([]);
