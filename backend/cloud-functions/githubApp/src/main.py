@@ -10,7 +10,7 @@ load_dotenv()
 
 # Replace with your GitHub webhook secret
 WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET")
-VALID_ACTIONS = ["opened", "reopened", "unlocked",  "added", "closed", "locked"]
+VALID_ACTIONS = ["opened", "reopened", "unlocked", "labeled", "unlabeled", "closed", "locked"]
 
 def verify_github_signature(request):
     """Verify that the request is coming from GitHub by checking the signature."""
@@ -40,10 +40,12 @@ def process_request(payload):
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
                 mongo_handler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
-                central_logger.info("Not an issue hence not adding it")
+                central_logger.info("Not an open issue hence not adding it")
         elif payload.get("action") == VALID_ACTIONS[3]:
-            # label is added, we need to update this in our DB
-            central_logger.warning("Did not implement label addition")
+            if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
+                mongo_handler.update_issue_label(payload.get("repository").get("full_name"), payload.get("issue"))
+            else:
+                central_logger.info("Not an open issue hence not updating it")
         elif payload.get("action") == VALID_ACTIONS[4]:
             # the issue was closed, or locked, we need to remove it from our DB
             mongo_handler.remove_issue(payload.get("repository").get("full_name"), payload.get("issue"))
@@ -82,6 +84,6 @@ def github_webhook(request):
 """
 Notes:
 1. Labels can be added to closed issues that we do not care about
-2. Currently we only care about issues, so ignore PRs creations
-3. We need to know which all repos have us downloaded and used
+2. Currently we only care about issues, so ignore PRs
+TODO 3. We need to know which all repos have us downloaded and used
 """

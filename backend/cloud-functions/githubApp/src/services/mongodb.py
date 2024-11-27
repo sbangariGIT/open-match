@@ -3,7 +3,6 @@ from ..logging.logger import central_logger
 import requests
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from pymongo.server_api import ServerApi
 from .githubHandler import github_handler
 
 
@@ -167,6 +166,44 @@ class MongoDBHandler:
                 central_logger.warning(f"Issue #{issue_number} not found in {repo_full_name}. No action taken.")
         except Exception as e:
             central_logger.warning(f"Failed to remove issue #{issue.get('number')} from {repo_name}: {e}")
+
+    def update_issue_label(self, repo_name, issue):
+        """
+        Updates an issue in the database by replacing the labels.
+
+        Args:
+        repo_name (str): Repository name in "owner/repo" format.
+        issue (dict): Issue details fetched from GitHub API.
+        """
+        try:
+            # Extract issue number and repo_full_name
+            issue_number = issue.get('number')
+            repo_full_name = repo_name
+
+            # Extract labels from the issue
+            new_labels = [label.get("name") for label in issue.get("labels", [])]
+
+            # Construct the filter to locate the issue in the database
+            filter_query = {
+                "repo_full_name": repo_full_name,
+                "issue_number": issue_number
+            }
+
+            # Define the update operation to replace the labels
+            update_operation = {
+                "$set": {"labels": new_labels}
+            }
+
+            # Attempt to update the document
+            result = self.issues_collection.update_one(filter_query, update_operation)
+
+            if result.matched_count > 0:
+                central_logger.info(f"Replaced labels for issue #{issue_number} in {repo_full_name} with {new_labels}.")
+            else:
+                central_logger.warning(f"Issue #{issue_number} not found in {repo_full_name}. No action taken.")
+        except Exception as e:
+            central_logger.warning(f"Failed to replace labels for issue #{issue.get('number')} in {repo_name}: {e}")
+
 
 
 # Load environment variables
