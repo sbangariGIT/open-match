@@ -56,9 +56,9 @@ def process_request(payload):
 def github_webhook(request):
     """Handle GitHub webhook payload with signature verification."""
     # Verify the GitHub signature
-    # verification_error = verify_github_signature(request)
-    # if verification_error:
-    #     return verification_error
+    verification_error = verify_github_signature(request)
+    if verification_error:
+        return verification_error
 
     try:
         # Parse JSON payload
