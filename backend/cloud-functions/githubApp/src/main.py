@@ -41,12 +41,12 @@ def process_request(payload):
                 mongo_handler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an open issue hence not adding it")
-        elif payload.get("action") == VALID_ACTIONS[3]:
+        elif payload.get("action") == VALID_ACTIONS[3] or payload.get("action") == VALID_ACTIONS[4]:
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
                 mongo_handler.update_issue_label(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an open issue hence not updating it")
-        elif payload.get("action") == VALID_ACTIONS[4]:
+        elif payload.get("action") == VALID_ACTIONS[5] or payload.get("action") == VALID_ACTIONS[6]:
             # the issue was closed, or locked, we need to remove it from our DB
             mongo_handler.remove_issue(payload.get("repository").get("full_name"), payload.get("issue"))
         return True
