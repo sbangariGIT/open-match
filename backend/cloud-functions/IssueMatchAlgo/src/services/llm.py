@@ -64,7 +64,6 @@ Frameworks & Tools: LangChain, Flask, React, Kafka, Redis, MongoDB, Firebase, Do
 Topics of Interest: AI-powered applications, microservices, cloud infrastructure, CI/CD pipelines, backend architecture, LLM integrations, tech."""  # fallback string
 
     def create_an_embedding(self, summary: str) -> list[float]:
-        print(summary)
         return self.client.embeddings.create(input = [summary], model="text-embedding-3-small").data[0].embedding
 
 

@@ -1,0 +1,10 @@
+# The CODEOWNERS file assigns responsibility for specific files, directories,
+# or code types to designated individuals or teams. When changes are made to
+# the specified areas, GitHub automatically requests reviews from these owners.
+# This helps ensure that the appropriate people review code changes, improving
+# code quality and streamlining the review process, especially in larger projects.
+
+*                             @sbangariGIT
+/frontend/                    @sbangariGIT
+/backend/scripts/             @Anurag-Gumidelli
+/backend/cloud-functions/     @Anurag-Gumidelli
