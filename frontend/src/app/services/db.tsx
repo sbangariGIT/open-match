@@ -1,43 +1,44 @@
 import { IssueCard } from "../models/IssueCard";
+import { Issue } from '../models/Issues';
 import { ProfileFormValues } from "../components/Form";
 
-export const getIssueCards = async (formData: ProfileFormValues): Promise<IssueCard[]> => {
-      const payload = await convertToJSON(formData);
-      // change to http://localhost:8080/ to test locally
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ISSUES_API_URL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: payload, // Send form data as JSON
-      });
+export const getMatchingIssueCards = async (formData: ProfileFormValues): Promise<IssueCard[]> => {
+  const payload = await convertToJSON(formData);
+  // change to http://localhost:8080/ to test locally
+  const response = await fetch(`${process.env.NEXT_PUBLIC_ISSUES_API_URL}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: payload, // Send form data as JSON
+  });
 
-      // Check if the response is okay
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+  // Check if the response is okay
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const jsonResponse = await response.json();
+
+  // Check if 'results' exist in the response
+  if (!jsonResponse.results || !Array.isArray(jsonResponse.results)) {
+    if (jsonResponse.error) {
+      throw new Error(jsonResponse.error);
+    } else {
+      throw new Error("There was an error in processing your request");
     }
 
-    const jsonResponse = await response.json();
+  }
 
-    // Check if 'results' exist in the response
-    if (!jsonResponse.results || !Array.isArray(jsonResponse.results)) {
-      if (jsonResponse.error) {
-        throw new Error(jsonResponse.error);
-      }else{
-        throw new Error("There was an error in processing your request");
-      }
-      
-    }
-
-      const data: IssueCard[] = jsonResponse.results; // Access 'results' field
-      return data;
+  const data: IssueCard[] = jsonResponse.results; // Access 'results' field
+  return data;
 }
 
 async function convertToJSON(payload: ProfileFormValues) {
   const { firstName, lastName, email, urls, resume, interests } = payload;
 
   // Initialize an empty object for the JSON payload
-  const jsonPayload: Record<string, string | string[] > = {
+  const jsonPayload: Record<string, string | string[]> = {
     firstName,
     lastName,
     email,
@@ -59,12 +60,42 @@ async function convertToJSON(payload: ProfileFormValues) {
   }
   return JSON.stringify(jsonPayload);
 }
-  
+
 function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+}
+
+export const getSearchIssueCards = async (): Promise<Issue[]> => {
+  // change to http://localhost:8080/ to test locally
+  const response = await fetch(`${process.env.NEXT_PUBLIC_ISSUES_SEARCH_API_URL}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Check if the response is okay
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const jsonResponse = await response.json();
+
+  // Check if 'results' exist in the response
+  if (!jsonResponse.results || !Array.isArray(jsonResponse.results)) {
+    if (jsonResponse.error) {
+      throw new Error(jsonResponse.error);
+    } else {
+      throw new Error("There was an error in processing your request");
+    }
+
+  }
+
+  const data: Issue[] = jsonResponse.results; // Access 'results' field
+  return data;
 }
