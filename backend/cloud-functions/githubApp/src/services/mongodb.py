@@ -167,7 +167,7 @@ class MongoDBHandler:
         except Exception as e:
             central_logger.warning(f"Failed to remove issue #{issue.get('number')} from {repo_name}: {e}")
 
-    def update_issue_label(self, repo_name, issue):
+    def update_issue(self, repo_name, issue):
         """
         Updates an issue in the database by replacing the labels.
 
@@ -180,18 +180,22 @@ class MongoDBHandler:
             issue_number = issue.get('number')
             repo_full_name = repo_name
 
-            # Extract labels from the issue
-            new_labels = [label.get("name") for label in issue.get("labels", [])]
-
             # Construct the filter to locate the issue in the database
             filter_query = {
                 "repo_full_name": repo_full_name,
                 "issue_number": issue_number
             }
 
+            update = {
+            "issue_html_url": issue.get("html_url"),
+            "issue_number": issue.get("number"),
+            "issue_title": issue.get("title"),
+            "labels": [label.get("name") for label in issue.get("labels", [])],
+            }
+
             # Define the update operation to replace the labels
             update_operation = {
-                "$set": {"labels": new_labels}
+                "$set": update
             }
 
             # Attempt to update the document
