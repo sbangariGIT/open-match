@@ -8,10 +8,12 @@ from .services.mongodb import mongo_handler
 
 load_dotenv()
 WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET")
+INSTALL_ACTIONS = ["added"]
+UNINSTALL_ACTIONS = ["removed"]
 CREATE_ACTIONS = ["opened", "reopened", "unlocked"]
 REMOVE_ACTIONS = ["closed", "locked"]
 UPDATE_ACTIONS = ["labeled", "unlabeled", "edited"]
-VALID_ACTIONS = CREATE_ACTIONS + REMOVE_ACTIONS + UPDATE_ACTIONS
+VALID_ACTIONS = CREATE_ACTIONS + REMOVE_ACTIONS + UPDATE_ACTIONS + UNINSTALL_ACTIONS + INSTALL_ACTIONS
 
 def verify_github_signature(request):
     """Verify that the request is coming from GitHub by checking the signature."""
@@ -36,6 +38,12 @@ def verify_github_signature(request):
 
 def process_request(payload):
     try:
+        ## Actions related to installion of the bot, only honor repositories_removed and repositories_added 
+        if payload.get("action") in INSTALL_ACTIONS or payload.get("action") in UNINSTALL_ACTIONS:
+            #TODO: based on repositories_removed and repositories_added update the DB
+            pass
+
+        ## Actions related to Issues
         if payload.get("action") in CREATE_ACTIONS:
             # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
@@ -86,5 +94,5 @@ def github_webhook(request):
 Notes:
 1. Labels can be added to closed issues that we do not care about
 2. Currently we only care about issues, so ignore PRs
-TODO 3. We need to know which all repos have us downloaded and used
+3. We need to know which all repos have us downloaded and used
 """

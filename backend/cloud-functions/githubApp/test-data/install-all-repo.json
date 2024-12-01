@@ -1,0 +1,103 @@
+{
+    "action": "added",
+    "installation": {
+        "id": 57383171,
+        "client_id": "Iv23liibkbn4m4tvmjZW",
+        "account": {
+            "login": "sbangariGIT",
+            "id": 56751089,
+            "node_id": "MDQ6VXNlcjU2NzUxMDg5",
+            "avatar_url": "https://avatars.githubusercontent.com/u/56751089?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/sbangariGIT",
+            "html_url": "https://github.com/sbangariGIT",
+            "followers_url": "https://api.github.com/users/sbangariGIT/followers",
+            "following_url": "https://api.github.com/users/sbangariGIT/following{/other_user}",
+            "gists_url": "https://api.github.com/users/sbangariGIT/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/sbangariGIT/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/sbangariGIT/subscriptions",
+            "organizations_url": "https://api.github.com/users/sbangariGIT/orgs",
+            "repos_url": "https://api.github.com/users/sbangariGIT/repos",
+            "events_url": "https://api.github.com/users/sbangariGIT/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/sbangariGIT/received_events",
+            "type": "User",
+            "user_view_type": "public",
+            "site_admin": false
+        },
+        "repository_selection": "all",
+        "access_tokens_url": "https://api.github.com/app/installations/57383171/access_tokens",
+        "repositories_url": "https://api.github.com/installation/repositories",
+        "html_url": "https://github.com/settings/installations/57383171",
+        "app_id": 1064132,
+        "app_slug": "open-match-bot",
+        "target_id": 56751089,
+        "target_type": "User",
+        "permissions": {
+            "contents": "read",
+            "issues": "read",
+            "metadata": "read"
+        },
+        "events": [
+            "issues",
+            "issue_comment",
+            "label",
+            "public",
+            "repository",
+            "sub_issues"
+        ],
+        "created_at": "2024-11-20T00:43:04.000-08:00",
+        "updated_at": "2024-11-30T21:00:26.000-08:00",
+        "single_file_name": null,
+        "has_multiple_single_files": false,
+        "single_file_paths": [],
+        "suspended_by": null,
+        "suspended_at": null
+    },
+    "repository_selection": "all",
+    "repositories_added": [
+        {
+            "id": 367342307,
+            "node_id": "MDEwOlJlcG9zaXRvcnkzNjczNDIzMDc=",
+            "name": "privacy-security-student-worker-project",
+            "full_name": "sbangariGIT/privacy-security-student-worker-project",
+            "private": false
+        },
+        {
+            "id": 368494388,
+            "node_id": "MDEwOlJlcG9zaXRvcnkzNjg0OTQzODg=",
+            "name": "basic_ColorMatching_MLAI",
+            "full_name": "sbangariGIT/basic_ColorMatching_MLAI",
+            "private": false
+        },
+        {
+            "id": 385691608,
+            "node_id": "MDEwOlJlcG9zaXRvcnkzODU2OTE2MDg=",
+            "name": "Server",
+            "full_name": "sbangariGIT/Server",
+            "private": true
+        }
+    ],
+    "repositories_removed": [],
+    "requester": null,
+    "sender": {
+        "login": "sbangariGIT",
+        "id": 56751089,
+        "node_id": "MDQ6VXNlcjU2NzUxMDg5",
+        "avatar_url": "https://avatars.githubusercontent.com/u/56751089?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/sbangariGIT",
+        "html_url": "https://github.com/sbangariGIT",
+        "followers_url": "https://api.github.com/users/sbangariGIT/followers",
+        "following_url": "https://api.github.com/users/sbangariGIT/following{/other_user}",
+        "gists_url": "https://api.github.com/users/sbangariGIT/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/sbangariGIT/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/sbangariGIT/subscriptions",
+        "organizations_url": "https://api.github.com/users/sbangariGIT/orgs",
+        "repos_url": "https://api.github.com/users/sbangariGIT/repos",
+        "events_url": "https://api.github.com/users/sbangariGIT/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/sbangariGIT/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+    }
+}
