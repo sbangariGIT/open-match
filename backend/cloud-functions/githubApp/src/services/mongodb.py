@@ -1,71 +1,10 @@
 import os
 from ..logging.logger import central_logger
-import requests
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from .githubHandler import github_handler
-
-
-
-class GitHubHandler:
-    def __init__(self, github_token):
-        """
-        Handles GitHub API interactions.
-
-        Args:
-        github_token (str): Personal access token for GitHub API authentication.
-        """
-        self.github_token = github_token
-        self.headers = {
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
-    def fetch_repo_details(self, repo):
-        """
-        Fetches details of a GitHub repository.
-
-        Args:
-        repo (str): Repository in "owner/repo" format.
-
-        Returns:
-        dict: Repository details including name, description, and topics.
-        """
-        url = f"https://api.github.com/repos/{repo}"
-        try:
-            response = requests.get(url, headers=self.headers)
-            if response.status_code == 200:
-                repo_data = response.json()
-                repo_data["languages"] = self.fetch_repo_languages(repo_data.get("languages_url"))
-                return repo_data
-            else:
-                central_logger.warning(f"Failed to fetch repo details ({repo}): {response.status_code}")
-                return {}
-        except requests.RequestException as e:
-            central_logger.warning(f"Error fetching repo details ({repo}): {e}")
-            return {}
-
-    def fetch_repo_languages(self, lang_url):
-        """
-        Fetches programming languages used in a repository.
-
-        Args:
-        lang_url (str): URL for fetching repository languages.
-
-        Returns:
-        list: List of programming languages.
-        """
-        try:
-            response = requests.get(lang_url, headers=self.headers)
-            if response.status_code == 200:
-                return list(response.json().keys())
-            else:
-                central_logger.warning(f"Failed to fetch repo languages: {response.status_code}")
-                return []
-        except requests.RequestException as e:
-            central_logger.warning(f"Error fetching repo languages: {e}")
-            return []
-
+from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings
 
 class MongoDBHandler:
     def __init__(self, db_uri, github_handler):
@@ -81,6 +20,7 @@ class MongoDBHandler:
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
         self.github_handler = github_handler
+        self.embedding_function =  OpenAIEmbeddings()
 
     def build_issue_object(self, repo, issue):
         """
@@ -202,11 +142,40 @@ class MongoDBHandler:
             result = self.issues_collection.update_one(filter_query, update_operation)
 
             if result.matched_count > 0:
-                central_logger.info(f"Replaced labels for issue #{issue_number} in {repo_full_name} with {new_labels}.")
+                central_logger.info(f"Updated issue #{issue_number} in {repo_full_name} with {update}.")
             else:
                 central_logger.warning(f"Issue #{issue_number} not found in {repo_full_name}. No action taken.")
         except Exception as e:
-            central_logger.warning(f"Failed to replace labels for issue #{issue.get('number')} in {repo_name}: {e}")
+            central_logger.warning(f"Failed to update issue #{issue.get('number')} in {repo_name}: {e}")
+
+    def make_vector_store_embedding(self, repo_name):
+        try:
+            documents = github_handler.get_repo_files(repo=repo_name)
+            MongoDBAtlasVectorSearch.from_documents(
+                documents=documents, embedding=self.embedding_function, collection=self.repo_collection #TODO: repo specific collection needs to be made
+            )
+            central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
+        except Exception as e:
+            central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
+            print(e)
+
+    def perform_vector_search(self, query, repo_name, index_name, k=5):
+        try:
+            # Create the vector store
+            vector_store = MongoDBAtlasVectorSearch(
+                embedding=self.embedding_function,
+                collection=self.repo_collection, #TODO: Repo specific collection needs to be made
+                index_name=index_name,
+                relevance_score_fn="cosine"
+            )
+
+            # Perform the vector search
+            results = vector_store.similarity_search(query, k=k)
+
+            return results
+        except Exception as e:
+            central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
+            print(e)
 
 
 

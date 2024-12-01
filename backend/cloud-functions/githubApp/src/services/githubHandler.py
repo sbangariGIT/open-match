@@ -1,6 +1,7 @@
 import os
 import requests
-from ..logging.logger import central_logger 
+from ..logging.logger import central_logger
+from langchain_community.document_loaders import GithubFileLoader
 from dotenv import load_dotenv
 
 
@@ -63,6 +64,32 @@ class GitHubHandler:
         except requests.RequestException as e:
             central_logger.warning(f"Error fetching repo languages: {e}")
             return []
+        
+    def get_repo_files(self, repo):
+        """
+        Index the repo and store it in vector DB
+
+        Args:
+        repo (str): Repository in "owner/repo" format.
+
+        Returns:
+        documents: of repo files
+        """
+        try:
+            loader = GithubFileLoader(
+                repo=repo,  # the repo name
+                branch="master",  #TODO: make this dyanamic
+                access_token=self.github_token,
+                github_api_url="https://api.github.com",
+                file_filter=lambda file_path: file_path.endswith(
+                    ".md" # load all markdowns files.
+                ),
+            )
+            documents = loader.load()
+            return documents
+        except Exception as e:
+            central_logger.severe(f"Failed to Index .md files of repo {repo}")
+            print(e)
 
 
 # Load environment variables
