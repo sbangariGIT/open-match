@@ -10,3 +10,14 @@ This is a webhook designed to be triggered by our Github App. It logs the payloa
 ## Deployment
 
 This webhook is implemented as a Google Cloud Function, making it serverless, scalable, and easy to deploy. Later if we think the load is high we can change it to a service.
+
+
+## Sequence Diagrams
+
+### Adding a new Repo
+
+![Alt text](../../../assets/add-repo.png)
+
+### Deleting an existing Repo
+
+![Alt text](../../../assets/delete-repo.png)
