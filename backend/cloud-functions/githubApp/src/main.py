@@ -43,11 +43,11 @@ def process_request(payload):
             #Based on repositories_removed and repositories_added update the DB
             repositories_removed = payload.get("repositories_removed", [])
             for repo in repositories_removed:
-                mongo_handler.remove_repo(repo_name=repo)
+                mongo_handler.remove_repo(repo_name=repo.get("full_name", ''))
             
             repositories_added = payload.get("repositories_added", [])
             for repo in repositories_added:
-                mongo_handler.add_repo(repo_name=repo)
+                mongo_handler.add_repo(repo_name=repo.get("full_name", ''))
 
         ## Actions related to Issues
         if payload.get("action") in CREATE_ACTIONS:

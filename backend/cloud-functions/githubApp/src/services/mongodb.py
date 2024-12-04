@@ -3,8 +3,8 @@ from ..logging.logger import central_logger
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from .githubHandler import github_handler
-from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-from langchain_openai import OpenAIEmbeddings
+# from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+# from langchain_openai import OpenAIEmbeddings
 
 class MongoDBHandler:
     def __init__(self, db_uri, github_handler):
@@ -20,7 +20,7 @@ class MongoDBHandler:
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
         self.github_handler = github_handler
-        self.embedding_function =  OpenAIEmbeddings()
+        # self.embedding_function =  OpenAIEmbeddings()
 
     def build_issue_object(self, repo, issue):
         """
@@ -181,34 +181,34 @@ class MongoDBHandler:
         except Exception as e:
             central_logger.warning(f"Failed to update issue #{issue.get('number')} in {repo_name}: {e}")
 
-    def make_vector_store_embedding(self, repo_name):
-        try:
-            documents = github_handler.get_repo_files(repo=repo_name)
-            MongoDBAtlasVectorSearch.from_documents(
-                documents=documents, embedding=self.embedding_function, collection=self.repo_collection #TODO: repo specific collection needs to be made
-            )
-            central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
-        except Exception as e:
-            central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
-            print(e)
+    # def make_vector_store_embedding(self, repo_name):
+    #     try:
+    #         documents = github_handler.get_repo_files(repo=repo_name)
+    #         MongoDBAtlasVectorSearch.from_documents(
+    #             documents=documents, embedding=self.embedding_function, collection=self.repo_collection #TODO: repo specific collection needs to be made
+    #         )
+    #         central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
+    #     except Exception as e:
+    #         central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
+    #         print(e)
 
-    def perform_vector_search(self, query, repo_name, index_name, k=5):
-        try:
-            # Create the vector store
-            vector_store = MongoDBAtlasVectorSearch(
-                embedding=self.embedding_function,
-                collection=self.repo_collection, #TODO: Repo specific collection needs to be made
-                index_name=index_name,
-                relevance_score_fn="cosine"
-            )
+    # def perform_vector_search(self, query, repo_name, index_name, k=5):
+    #     try:
+    #         # Create the vector store
+    #         vector_store = MongoDBAtlasVectorSearch(
+    #             embedding=self.embedding_function,
+    #             collection=self.repo_collection, #TODO: Repo specific collection needs to be made
+    #             index_name=index_name,
+    #             relevance_score_fn="cosine"
+    #         )
 
-            # Perform the vector search
-            results = vector_store.similarity_search(query, k=k)
+    #         # Perform the vector search
+    #         results = vector_store.similarity_search(query, k=k)
 
-            return results
-        except Exception as e:
-            central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
-            print(e)
+    #         return results
+    #     except Exception as e:
+    #         central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
+    #         print(e)
 
 
 
