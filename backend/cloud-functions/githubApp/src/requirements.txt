@@ -3,3 +3,5 @@ python-dotenv
 slackclient
 pymongo
 requests
+langchain_openai
+langchain_community

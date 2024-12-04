@@ -1,9 +1,62 @@
 import os
 import requests
 from ..logging.logger import central_logger
-# from langchain_community.document_loaders import GithubFileLoader
+from langchain_community.document_loaders import GithubFileLoader
 from dotenv import load_dotenv
 
+LANGUAGE_EXTENSTIONS = (
+    ".py", ".pyw", ".pyc", ".pyo", 
+    ".js", ".mjs", ".cjs", 
+    ".ts", ".tsx", 
+    ".java", 
+    ".c", ".h", 
+    ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx", 
+    ".rb", ".rbw", 
+    ".php", ".php3", ".php4", ".php5", ".phtml", 
+    ".swift", 
+    ".go", 
+    ".rs", 
+    ".kt", ".kts", 
+    ".scala", 
+    ".m", ".h", 
+    ".html", ".htm", 
+    ".css", 
+    ".scss", ".sass", 
+    ".less", 
+    ".json", 
+    ".xml", 
+    ".yaml", ".yml", 
+    ".md", ".markdown", 
+    ".lua", 
+    ".sh", ".bash", ".zsh", 
+    ".r", ".rmd", 
+    ".m", 
+    ".hs", 
+    ".pl", ".pm", ".t", 
+    ".sql", 
+    ".tex", 
+    ".dart", 
+    ".ex", ".exs", 
+    ".cs", 
+    ".fs", 
+    ".vhdl", ".vhd", 
+    ".v", ".sv", ".svh", 
+    ".cob", ".cbl", 
+    ".f90", ".f95", ".f03", ".f08", 
+    ".asm", ".s", 
+    ".as", 
+    ".pl", ".pro", 
+    ".rkt", 
+    ".vala", 
+    ".cr", 
+    ".4th", ".fs", 
+    ".jl", 
+    ".hh", ".php", ".hack", 
+    ".tcl", 
+    ".scm", ".ss", 
+    ".sol", 
+    ".coffee"
+)
 
 
 class GitHubHandler:
@@ -65,31 +118,31 @@ class GitHubHandler:
             central_logger.warning(f"Error fetching repo languages: {e}")
             return []
         
-    # def get_repo_files(self, repo):
-    #     """
-    #     Index the repo and store it in vector DB
+    def get_repo_files(self, repo, repo_details):
+        """
+        Index the repo and store it in vector DB
 
-    #     Args:
-    #     repo (str): Repository in "owner/repo" format.
+        Args:
+        repo (str): Repository in "owner/repo" format.
 
-    #     Returns:
-    #     documents: of repo files
-    #     """
-    #     try:
-    #         loader = GithubFileLoader(
-    #             repo=repo,  # the repo name
-    #             branch="master",  #TODO: make this dyanamic
-    #             access_token=self.github_token,
-    #             github_api_url="https://api.github.com",
-    #             file_filter=lambda file_path: file_path.endswith(
-    #                 ".md" # load all markdowns files.
-    #             ),
-    #         )
-    #         documents = loader.load()
-    #         return documents
-    #     except Exception as e:
-    #         central_logger.severe(f"Failed to Index .md files of repo {repo}")
-    #         print(e)
+        Returns:
+        documents: of repo files
+        """
+        try:
+            loader = GithubFileLoader(
+                repo=repo,  # the repo name
+                branch=repo_details.get("default_branch"),
+                access_token=self.github_token,
+                github_api_url="https://api.github.com",
+                file_filter=lambda file_path: file_path.endswith(
+                    LANGUAGE_EXTENSTIONS # load all markdowns files.
+                ),
+            )
+            documents = loader.load()
+            return documents
+        except Exception as e:
+            central_logger.severe(f"Failed to Index files of repo {repo}")
+            print(e)
 
 
 # Load environment variables

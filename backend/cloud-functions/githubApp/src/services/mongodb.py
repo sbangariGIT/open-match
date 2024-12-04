@@ -3,8 +3,8 @@ from ..logging.logger import central_logger
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from .githubHandler import github_handler
-# from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-# from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings
 
 class MongoDBHandler:
     def __init__(self, db_uri, github_handler):
@@ -20,7 +20,7 @@ class MongoDBHandler:
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
         self.github_handler = github_handler
-        # self.embedding_function =  OpenAIEmbeddings()
+        self.embedding_function =  OpenAIEmbeddings()
 
     def build_issue_object(self, repo, issue):
         """
@@ -48,6 +48,9 @@ class MongoDBHandler:
             "labels": [label.get("name") for label in issue.get("labels", [])],
         }
 
+    def convert_to_dash_format(self, repo_string):
+        return repo_string.replace("/", "-")
+
     def add_repo(self, repo_name):
         """
         Adds a repository to the database.
@@ -66,6 +69,11 @@ class MongoDBHandler:
                 central_logger.info(f"Updated repository {repo_name} in the database.")
             elif result.upserted_id:
                 central_logger.info(f"Added new repository {repo_name} to the database.")
+
+                central_logger.info(f"Trying to Index new repository {repo_name} to the database.")
+                repo_specific_collection_name = self.convert_to_dash_format(repo_name)
+                repo_specific_collection = self.db[repo_specific_collection_name]
+                self.make_vector_store_embedding(repo_name=repo_name, repo_details=repo_details, collection=repo_specific_collection)
         else:
             central_logger.warning(f"Failed to fetch details for repository {repo_name}.")
 
@@ -181,16 +189,17 @@ class MongoDBHandler:
         except Exception as e:
             central_logger.warning(f"Failed to update issue #{issue.get('number')} in {repo_name}: {e}")
 
-    # def make_vector_store_embedding(self, repo_name):
-    #     try:
-    #         documents = github_handler.get_repo_files(repo=repo_name)
-    #         MongoDBAtlasVectorSearch.from_documents(
-    #             documents=documents, embedding=self.embedding_function, collection=self.repo_collection #TODO: repo specific collection needs to be made
-    #         )
-    #         central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
-    #     except Exception as e:
-    #         central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
-    #         print(e)
+    def make_vector_store_embedding(self, repo_name, repo_details, collection):
+        try:
+            documents = github_handler.get_repo_files(repo=repo_name,repo_details=repo_details)
+            central_logger.info(f"{repo_name} has been coverted to {len(documents)} documents")
+            MongoDBAtlasVectorSearch.from_documents(
+                documents=documents, embedding=self.embedding_function, collection=collection
+            )
+            central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
+        except Exception as e:
+            central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
+            print(e)
 
     # def perform_vector_search(self, query, repo_name, index_name, k=5):
     #     try:
