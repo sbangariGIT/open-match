@@ -54,8 +54,12 @@ def process_request(payload):
             
             repositories_added = payload.get("repositories_added", [])
             for repo in repositories_added:
-                mongo_handler.add_repo(repo_name=repo.get("full_name", ''))
-
+                if not repo.get('private', True):
+                    mongo_handler.add_repo(repo_name=repo.get("full_name", '')) # only add public repos
+                else:
+                    central_logger.info(f"{repo.get("full_name", '')} is a private repo")
+        
+        #TODO: Check if we serve this repo before you try to add, delete, update the DB
         ## Actions related to Issues
         if payload.get("action") in CREATE_ACTIONS:
             # new issue is opened, or old issue is reopened, or unlocked, we need to add this to our DB
