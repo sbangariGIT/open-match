@@ -57,10 +57,43 @@ class MongoDBHandler:
         """
         repo_details = self.github_handler.fetch_repo_details(repo_name)
         if repo_details:
-            self.repo_collection.insert_one(repo_details)
-            central_logger.info(f"Added repository {repo_name} to the database.")
+            result = self.repo_collection.update_one(
+                {"full_name": repo_details['full_name']},  # Filter by unique field
+                {"$set": repo_details},                  # Update the document
+                upsert=True                              # Insert if not exists
+            )
+            if result.matched_count:
+                central_logger.info(f"Updated repository {repo_name} in the database.")
+            elif result.upserted_id:
+                central_logger.info(f"Added new repository {repo_name} to the database.")
         else:
-            central_logger.warning(f"Failed to add repository {repo_name}.")
+            central_logger.warning(f"Failed to fetch details for repository {repo_name}.")
+
+    def remove_repo(self, repo_name):
+        """
+        Removes a repository to the database.
+
+        Args:
+        repo_name (str): Repository name in "owner/repo" format.
+        """
+        try:
+            repo_full_name = repo_name
+
+            # Construct the filter to locate the issue in the database
+            filter_query = {
+                "full_name": repo_full_name,
+            }
+
+            # Attempt to delete the document
+            result = self.repo_collection.delete_one(filter_query)
+
+            if result.deleted_count > 0:
+                central_logger.info(f"Removed {repo_full_name} from the database.")
+            else:
+                central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
+        except Exception as e:
+            central_logger.warning(f"Failed to remove repo {repo_name}: {e}")
+
 
     def add_issue(self, repo_name, issue):
         """

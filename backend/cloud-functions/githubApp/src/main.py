@@ -40,8 +40,14 @@ def process_request(payload):
     try:
         ## Actions related to installion of the bot, only honor repositories_removed and repositories_added 
         if payload.get("action") in INSTALL_ACTIONS or payload.get("action") in UNINSTALL_ACTIONS:
-            #TODO: based on repositories_removed and repositories_added update the DB
-            pass
+            #Based on repositories_removed and repositories_added update the DB
+            repositories_removed = payload.get("repositories_removed", [])
+            for repo in repositories_removed:
+                mongo_handler.remove_repo(repo_name=repo)
+            
+            repositories_added = payload.get("repositories_added", [])
+            for repo in repositories_added:
+                mongo_handler.add_repo(repo_name=repo)
 
         ## Actions related to Issues
         if payload.get("action") in CREATE_ACTIONS:
@@ -50,15 +56,18 @@ def process_request(payload):
                 mongo_handler.add_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an open issue hence not adding it")
+        # Update Issue
         elif payload.get("action") in UPDATE_ACTIONS:
             if payload.get("issue") and payload.get("issue").get("state") == "open" or payload.get("issue").get("state") == "reponed":
                 mongo_handler.update_issue(payload.get("repository").get("full_name"), payload.get("issue"))
             else:
                 central_logger.info("Not an open issue hence not updating it")
+        # Remove Issue
         elif payload.get("action") in REMOVE_ACTIONS:
             # the issue was closed, or locked, we need to remove it from our DB
             mongo_handler.remove_issue(payload.get("repository").get("full_name"), payload.get("issue"))
         return True
+
     except Exception as e:
         central_logger.severe(f"An Expection occured while processing the following payload ```{payload}```\n Exceptions {str(e)}")
         return False
