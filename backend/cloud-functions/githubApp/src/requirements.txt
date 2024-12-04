@@ -1,0 +1,5 @@
+functions-framework
+python-dotenv
+slackclient
+pymongo
+requests
