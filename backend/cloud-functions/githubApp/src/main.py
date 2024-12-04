@@ -1,3 +1,10 @@
+"""
+This cloud function handles incoming GitHub webhook events.
+It validates the payload authenticity, processes supported event actions, and updates a MongoDB database accordingly. 
+The function ensures secure communication with GitHub by verifying the signature of each request using HMAC with a shared secret. Please keep production secret secret!
+"""
+
+
 import hashlib
 import hmac
 import os
@@ -43,7 +50,7 @@ def process_request(payload):
             #Based on repositories_removed and repositories_added update the DB
             repositories_removed = payload.get("repositories_removed", [])
             for repo in repositories_removed:
-                mongo_handler.remove_repo(repo_name=repo.get("full_name", ''))
+                mongo_handler.remove_repo(repo_name=repo)
             
             repositories_added = payload.get("repositories_added", [])
             for repo in repositories_added:
@@ -98,10 +105,3 @@ def github_webhook(request):
     except Exception as e:
         print(f"Error: {e}")
         return {"status": "failure", "message": str(e)}, 500
-
-"""
-Notes:
-1. Labels can be added to closed issues that we do not care about
-2. Currently we only care about issues, so ignore PRs
-3. We need to know which all repos have us downloaded and used
-"""
