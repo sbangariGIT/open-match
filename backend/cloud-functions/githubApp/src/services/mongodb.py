@@ -104,7 +104,7 @@ class MongoDBHandler:
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
             # remove all the repo related issues from the DB
-            self.remove_issue(repo_name=repo_full_name, all=True)
+            self.remove_issue(repo_name=repo_full_name, issue=None, all=True)
         except Exception as e:
             central_logger.warning(f"Failed to remove repo {repo_name}: {e}")
 
