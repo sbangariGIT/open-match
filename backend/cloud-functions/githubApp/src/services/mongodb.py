@@ -93,12 +93,13 @@ class MongoDBHandler:
 
             if result.deleted_count > 0:
                 central_logger.info(f"Removed {repo_full_name} from the database.")
-                collection_name = self.convert_to_dash_format(repo_name)
-                if collection_name in self.db.list_collection_names():
-                    self.db.drop_collection(collection_name)
-                    central_logger.info(f"Vector DB Collection '{collection_name}' has been deleted.")
+                # Delete all matching documents
+                result = self.repo_source_code_collection.delete_many({"repo_name": repo_full_name})
+                # Check if the operation was successful
+                if result.deleted_count > 0:
+                    print(f"Success: Deleted {result.deleted_count} documents with repo_name = {repo_full_name}")
                 else:
-                    central_logger.info(f"Vector DB Collection Collection '{collection_name}' does not exist.")
+                    print(f"Failed: No documents found with repo_name = {repo_full_name}")
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
         except Exception as e:
