@@ -1,4 +1,5 @@
 import os
+import time
 from ..logging.logger import central_logger
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -194,12 +195,14 @@ class MongoDBHandler:
 
     def make_vector_store_embedding(self, repo_name, repo_details, collection):
         try:
+            start = time.time()
             documents = github_handler.get_repo_files(repo=repo_name,repo_details=repo_details)
             central_logger.info(f"{repo_name} has been coverted to {len(documents)} documents")
             MongoDBAtlasVectorSearch.from_documents(
                 documents=documents, embedding=self.embedding_function, collection=collection
             )
-            central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
+            stop = time.time()
+            central_logger.info(f"Successfully loaded {len(documents)} documents to vector store for repo {repo_name} in {stop - start} seconds")
         except Exception as e:
             central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
             print(e)
