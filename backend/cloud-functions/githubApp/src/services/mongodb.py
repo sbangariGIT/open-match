@@ -20,6 +20,7 @@ class MongoDBHandler:
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
         self.repo_source_code_collection = self.db.repo_source_code
+        self.repo_source_code_index = "source_code_knn_search"
         self.github_handler = github_handler
         self.embedding_function =  OpenAIEmbeddings()
 
@@ -48,7 +49,6 @@ class MongoDBHandler:
             "issue_title": issue.get("title"),
             "labels": [label.get("name") for label in issue.get("labels", [])],
         }
-
 
     def add_repo(self, repo_name):
         """
@@ -97,9 +97,9 @@ class MongoDBHandler:
                 result = self.repo_source_code_collection.delete_many({"repo_name": repo_full_name})
                 # Check if the operation was successful
                 if result.deleted_count > 0:
-                    print(f"Success: Deleted {result.deleted_count} documents with repo_name = {repo_full_name}")
+                    central_logger.info(f"Success: Deleted {result.deleted_count} documents with repo_name = {repo_full_name}")
                 else:
-                    print(f"Failed: No documents found with repo_name = {repo_full_name}")
+                    central_logger.warning(f"Failed: No documents found with repo_name = {repo_full_name}")
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
         except Exception as e:

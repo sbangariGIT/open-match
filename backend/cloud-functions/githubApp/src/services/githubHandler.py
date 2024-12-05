@@ -2,6 +2,7 @@ import os
 import requests
 from ..logging.logger import central_logger
 from langchain_community.document_loaders import GithubFileLoader
+from langchain_core.documents import Document
 from dotenv import load_dotenv
 
 LANGUAGE_EXTENSTIONS = (
@@ -139,9 +140,17 @@ class GitHubHandler:
                 ),
             )
             documents = loader.load()
+            modified_documents = []
             for document in documents:
-                document["repo_name"] = repo  # Adding the repo_name field to help with filtering
-            return documents
+                # Access the page content and metadata directly
+                page_content = document.page_content
+                metadata = document.metadata
+                # Add the repo_name to the metadata
+                modified_metadata = {**metadata, "repo_name": repo}
+                # Create a new Document with updated metadata
+                modified_documents.append(Document(page_content=page_content, metadata=modified_metadata))
+                
+            return modified_documents
         except Exception as e:
             central_logger.severe(f"Failed to Index files of repo {repo}")
             print(e)
