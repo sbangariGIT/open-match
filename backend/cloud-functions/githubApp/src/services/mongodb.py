@@ -1,10 +1,11 @@
 import os
+import time
 from ..logging.logger import central_logger
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from .githubHandler import github_handler
-# from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-# from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings
 
 class MongoDBHandler:
     def __init__(self, db_uri, github_handler):
@@ -19,8 +20,10 @@ class MongoDBHandler:
         self.db = client.open_match
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
+        self.repo_source_code_collection = self.db.repo_source_code
+        self.repo_source_code_index = "source_code_knn_search"
         self.github_handler = github_handler
-        # self.embedding_function =  OpenAIEmbeddings()
+        self.embedding_function =  OpenAIEmbeddings()
 
     def build_issue_object(self, repo, issue):
         """
@@ -66,6 +69,8 @@ class MongoDBHandler:
                 central_logger.info(f"Updated repository {repo_name} in the database.")
             elif result.upserted_id:
                 central_logger.info(f"Added new repository {repo_name} to the database.")
+                central_logger.info(f"Trying to Index new repository {repo_name} to the database.")
+                self.make_vector_store_embedding(repo_name=repo_name, repo_details=repo_details, collection=self.repo_source_code_collection)
         else:
             central_logger.warning(f"Failed to fetch details for repository {repo_name}.")
 
@@ -89,6 +94,13 @@ class MongoDBHandler:
 
             if result.deleted_count > 0:
                 central_logger.info(f"Removed {repo_full_name} from the database.")
+                # Delete all matching documents
+                result = self.repo_source_code_collection.delete_many({"repo_name": repo_full_name})
+                # Check if the operation was successful
+                if result.deleted_count > 0:
+                    central_logger.info(f"Success: Deleted {result.deleted_count} documents with repo_name = {repo_full_name}")
+                else:
+                    central_logger.warning(f"Failed: No documents found with repo_name = {repo_full_name}")
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
         except Exception as e:
@@ -181,34 +193,39 @@ class MongoDBHandler:
         except Exception as e:
             central_logger.warning(f"Failed to update issue #{issue.get('number')} in {repo_name}: {e}")
 
-    # def make_vector_store_embedding(self, repo_name):
-    #     try:
-    #         documents = github_handler.get_repo_files(repo=repo_name)
-    #         MongoDBAtlasVectorSearch.from_documents(
-    #             documents=documents, embedding=self.embedding_function, collection=self.repo_collection #TODO: repo specific collection needs to be made
-    #         )
-    #         central_logger.info(f"Successfully loaded documents to vector store for repo {repo_name}")
-    #     except Exception as e:
-    #         central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
-    #         print(e)
+    def make_vector_store_embedding(self, repo_name, repo_details, collection):
+        try:
+            start = time.time()
+            documents = github_handler.get_repo_files(repo=repo_name,repo_details=repo_details)
+            central_logger.info(f"{repo_name} has been coverted to {len(documents)} documents")
+            MongoDBAtlasVectorSearch.from_documents(
+                documents=documents, embedding=self.embedding_function, collection=collection
+            )
+            stop = time.time()
+            central_logger.info(f"Successfully loaded {len(documents)} documents to vector store for repo {repo_name} in {stop - start} seconds")
+        except Exception as e:
+            central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
+            print(e)
 
-    # def perform_vector_search(self, query, repo_name, index_name, k=5):
-    #     try:
-    #         # Create the vector store
-    #         vector_store = MongoDBAtlasVectorSearch(
-    #             embedding=self.embedding_function,
-    #             collection=self.repo_collection, #TODO: Repo specific collection needs to be made
-    #             index_name=index_name,
-    #             relevance_score_fn="cosine"
-    #         )
-
-    #         # Perform the vector search
-    #         results = vector_store.similarity_search(query, k=k)
-
-    #         return results
-    #     except Exception as e:
-    #         central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
-    #         print(e)
+    def perform_vector_search(self, query, repo_name, index_name, k=5):
+        try:
+            # Create the vector store
+            results = self.repo_source_code_collection.aggregate([
+                # Match stage to filter by repo_name
+                {"$match": {"repo_name": repo_name}},  # Only match desired repo name
+                # Vector search stage
+                {"$vectorSearch": {
+                    "queryVector": query,
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": k,
+                    "index": index_name,
+                }}
+            ])
+            return results
+        except Exception as e:
+            central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
+            print(e)
 
 
 
