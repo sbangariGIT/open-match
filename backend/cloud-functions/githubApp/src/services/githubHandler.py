@@ -139,6 +139,8 @@ class GitHubHandler:
                 ),
             )
             documents = loader.load()
+            for document in documents:
+                document["repo_name"] = repo  # Adding the repo_name field to help with filtering
             return documents
         except Exception as e:
             central_logger.severe(f"Failed to Index files of repo {repo}")

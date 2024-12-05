@@ -19,6 +19,7 @@ class MongoDBHandler:
         self.db = client.open_match
         self.issues_collection = self.db.issues_bot_gen
         self.repo_collection = self.db.repo
+        self.repo_source_code_collection = self.db.repo_source_code
         self.github_handler = github_handler
         self.embedding_function =  OpenAIEmbeddings()
 
@@ -48,8 +49,6 @@ class MongoDBHandler:
             "labels": [label.get("name") for label in issue.get("labels", [])],
         }
 
-    def convert_to_dash_format(self, repo_string):
-        return repo_string.replace("/", "-")
 
     def add_repo(self, repo_name):
         """
@@ -69,11 +68,8 @@ class MongoDBHandler:
                 central_logger.info(f"Updated repository {repo_name} in the database.")
             elif result.upserted_id:
                 central_logger.info(f"Added new repository {repo_name} to the database.")
-
                 central_logger.info(f"Trying to Index new repository {repo_name} to the database.")
-                repo_specific_collection_name = self.convert_to_dash_format(repo_name)
-                repo_specific_collection = self.db[repo_specific_collection_name]
-                self.make_vector_store_embedding(repo_name=repo_name, repo_details=repo_details, collection=repo_specific_collection)
+                self.make_vector_store_embedding(repo_name=repo_name, repo_details=repo_details, collection=self.repo_source_code_collection)
         else:
             central_logger.warning(f"Failed to fetch details for repository {repo_name}.")
 
@@ -207,23 +203,25 @@ class MongoDBHandler:
             central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
             print(e)
 
-    # def perform_vector_search(self, query, repo_name, index_name, k=5):
-    #     try:
-    #         # Create the vector store
-    #         vector_store = MongoDBAtlasVectorSearch(
-    #             embedding=self.embedding_function,
-    #             collection=self.repo_collection, #TODO: Repo specific collection needs to be made
-    #             index_name=index_name,
-    #             relevance_score_fn="cosine"
-    #         )
-
-    #         # Perform the vector search
-    #         results = vector_store.similarity_search(query, k=k)
-
-    #         return results
-    #     except Exception as e:
-    #         central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
-    #         print(e)
+    def perform_vector_search(self, query, repo_name, index_name, k=5):
+        try:
+            # Create the vector store
+            results = self.repo_source_code_collection.aggregate([
+                # Match stage to filter by repo_name
+                {"$match": {"repo_name": repo_name}},  # Only match desired repo name
+                # Vector search stage
+                {"$vectorSearch": {
+                    "queryVector": query,
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": k,
+                    "index": index_name,
+                }}
+            ])
+            return results
+        except Exception as e:
+            central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
+            print(e)
 
 
 
