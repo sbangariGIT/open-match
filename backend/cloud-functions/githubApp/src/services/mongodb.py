@@ -103,9 +103,10 @@ class MongoDBHandler:
                     central_logger.warning(f"Failed: No documents found with repo_name = {repo_full_name}")
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
+            # remove all the repo related issues from the DB
+            self.remove_issue(repo_name=repo_full_name, all=True)
         except Exception as e:
             central_logger.warning(f"Failed to remove repo {repo_name}: {e}")
-
 
     def add_issue(self, repo_name, issue):
         """
@@ -123,7 +124,7 @@ class MongoDBHandler:
         else:
             central_logger.warning(f"Failed to add issue #{issue.get('number')} from {repo_name}.")
 
-    def remove_issue(self, repo_name, issue):
+    def remove_issue(self, repo_name, issue, all=False):
         """
         Removes an issue from the database.
 
@@ -132,23 +133,32 @@ class MongoDBHandler:
         issue (dict): Issue details fetched from GitHub API.
         """
         try:
-            # Extract issue number and repo_full_name
-            issue_number = issue.get('number')
-            repo_full_name = repo_name
+            if not all:
+                # Extract issue number and repo_full_name
+                issue_number = issue.get('number')
+                repo_full_name = repo_name
 
-            # Construct the filter to locate the issue in the database
-            filter_query = {
-                "repo_full_name": repo_full_name,
-                "issue_number": issue_number
-            }
-
-            # Attempt to delete the document
-            result = self.issues_collection.delete_one(filter_query)
-
-            if result.deleted_count > 0:
-                central_logger.info(f"Removed issue #{issue_number} from {repo_full_name} from the database.")
+                # Construct the filter to locate the issue in the database
+                filter_query = {
+                    "repo_full_name": repo_full_name,
+                    "issue_number": issue_number
+                }
+                # Attempt to delete the document
+                result = self.issues_collection.delete_one(filter_query)
+                if result.deleted_count > 0:
+                    central_logger.info(f"Removed issue #{issue_number} from {repo_full_name} from the database.")
+                else:
+                    central_logger.warning(f"Issue #{issue_number} not found in {repo_full_name}. No action taken.")
             else:
-                central_logger.warning(f"Issue #{issue_number} not found in {repo_full_name}. No action taken.")
+                filter_query = {
+                    "repo_full_name": repo_full_name,
+                }
+                result = self.issues_collection.delete_many(filter_query)
+
+                if result.deleted_count > 0:
+                    central_logger.info(f"Removed {result.deleted_count} issues from {repo_full_name} from the database.")
+                else:
+                    central_logger.warning(f"No Issue from {repo_full_name} found. No action taken.")
         except Exception as e:
             central_logger.warning(f"Failed to remove issue #{issue.get('number')} from {repo_name}: {e}")
 
