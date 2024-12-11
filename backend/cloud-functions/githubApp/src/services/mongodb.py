@@ -104,7 +104,7 @@ class MongoDBHandler:
             else:
                 central_logger.warning(f"Repo {repo_full_name} not found in . No action taken.")
             # remove all the repo related issues from the DB
-            self.remove_issue(repo_name=repo_full_name, issue=None, all=True)
+            self.remove_issue(repo_name=repo_full_name, issue={}, all=True)
         except Exception as e:
             central_logger.warning(f"Failed to remove repo {repo_name}: {e}")
 
@@ -133,11 +133,12 @@ class MongoDBHandler:
         issue (dict): Issue details fetched from GitHub API.
         """
         try:
-            if not all:
-                # Extract issue number and repo_full_name
-                issue_number = issue.get('number')
-                repo_full_name = repo_name
+            # Extract issue number and repo_full_name
+            issue_number = issue.get('number', "0")
+            repo_full_name = repo_name
 
+            if not all:
+                
                 # Construct the filter to locate the issue in the database
                 filter_query = {
                     "repo_full_name": repo_full_name,
@@ -158,9 +159,9 @@ class MongoDBHandler:
                 if result.deleted_count > 0:
                     central_logger.info(f"Removed {result.deleted_count} issues from {repo_full_name} from the database.")
                 else:
-                    central_logger.warning(f"No Issue from {repo_full_name} found. No action taken.")
+                    central_logger.warning(f"Failed to remove issue #{issue.get('number', "0")} from {repo_name}: {e}")
         except Exception as e:
-            central_logger.warning(f"Failed to remove issue #{issue.get('number')} from {repo_name}: {e}")
+            central_logger.severe(f"Failed to remove issues from {repo_name}: {e}")
 
     def update_issue(self, repo_name, issue):
         """
