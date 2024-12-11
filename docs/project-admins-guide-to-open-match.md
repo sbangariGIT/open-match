@@ -5,7 +5,7 @@ Welcome to Open Match! We're thrilled to have you onboard and excited to see you
 ---
 
 ## Table of Contents
-1. [Getting Started](#getting-started)
+1. [Getting Started](#getting-started-wiht-open-match)
 2. [Features](#features)
 3. [Limitations](#limitations)
 4. [Managing Your Repository](#managing-your-repository)
