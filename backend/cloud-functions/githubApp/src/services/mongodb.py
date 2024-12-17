@@ -4,11 +4,12 @@ from ..logging.logger import central_logger
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from .githubHandler import github_handler
+from .llm import llm_service
 from langchain_community.vectorstores import MongoDBAtlasVectorSearch
 from langchain_openai import OpenAIEmbeddings
 
 class MongoDBHandler:
-    def __init__(self, db_uri, github_handler):
+    def __init__(self, db_uri, github_handler, llm_service):
         """
         Handles MongoDB interactions.
 
@@ -23,9 +24,10 @@ class MongoDBHandler:
         self.repo_source_code_collection = self.db.repo_source_code
         self.repo_source_code_index = "source_code_knn_search"
         self.github_handler = github_handler
+        self.llm_service = llm_service
         self.embedding_function =  OpenAIEmbeddings()
 
-    def build_issue_object(self, repo, issue):
+    def build_issue_object(self, repo, issue, summary):
         """
         Builds a structured issue object for MongoDB.
 
@@ -48,6 +50,7 @@ class MongoDBHandler:
             "issue_html_url": issue.get("html_url"),
             "issue_number": issue.get("number"),
             "issue_title": issue.get("title"),
+            "summary": summary,
             "labels": [label.get("name") for label in issue.get("labels", [])],
         }
 
@@ -118,7 +121,8 @@ class MongoDBHandler:
         """
         repo_details = self.github_handler.fetch_repo_details(repo_name)
         if repo_details:
-            issue_obj = self.build_issue_object(repo_details, issue)
+            summary = self.generate_issue_summary(issue, repo_name)
+            issue_obj = self.build_issue_object(repo_details, issue, summary)
             self.issues_collection.insert_one(issue_obj)
             central_logger.info(f"Added issue #{issue['number']} from {repo_name} to the database.")
         else:
@@ -218,29 +222,42 @@ class MongoDBHandler:
             central_logger.severe(f"Unable to load documents to vector store for repo {repo_name}")
             print(e)
 
-    def perform_vector_search(self, query, repo_name, index_name, k=5):
+    def perform_vector_search(self, query, repo_name, k=5):
         try:
+            query_embedding = self.embedding_function.embed_query(query)
             # Create the vector store
             results = self.repo_source_code_collection.aggregate([
-                # Match stage to filter by repo_name
-                {"$match": {"repo_name": repo_name}},  # Only match desired repo name
                 # Vector search stage
                 {"$vectorSearch": {
-                    "queryVector": query,
+                    "queryVector": query_embedding,
                     "path": "embedding",
                     "numCandidates": 100,
                     "limit": k,
-                    "index": index_name,
+                    "index": self.repo_source_code_index,
+                    "filter": {"repo_name": repo_name}  # Match stage to filter by repo_name
                 }}
             ])
-            return results
+            docs = []
+            for doc in results:
+                docs.append(doc['text'])
+            return docs
         except Exception as e:
             central_logger.severe(f"Unable to perform vector search for repo {repo_name}")
             print(e)
+
+    def generate_issue_summary(self, issue, repo_name):
+        query = self._issue_to_text(issue)
+        get_relevant_docs = self.perform_vector_search(query, repo_name)
+        central_logger.info(f"For the Issue {query}, here are our relevant document information {get_relevant_docs}")
+        return self.llm_service.get_issue_summary(query, get_relevant_docs)
+    
+    def _issue_to_text(self, issue) -> str:
+        #TODO: convert this issue into proper text
+        return issue.get('title', 'Could not get issue') #FIXME
 
 
 
 # Load environment variables
 load_dotenv()
 MONGO_DB_URI = os.getenv("MONGO_DB_URI")
-mongo_handler = MongoDBHandler(db_uri=MONGO_DB_URI, github_handler=github_handler)
+mongo_handler = MongoDBHandler(db_uri=MONGO_DB_URI, github_handler=github_handler, llm_service=llm_service)
